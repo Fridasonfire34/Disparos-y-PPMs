@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
 import Image from "next/image";
 import { useState } from "react";
-import styles from "./page.module.css";
+import styles from "../app/page.module.css";
 
 interface DisparoData {
   Entrega: string;
   "Fecha CMX": string;
   Estatus: string;
-  [key: string]: any;
+  [key: string]: string | number | null;
 }
 
 export default function Home() {
@@ -19,7 +19,11 @@ export default function Home() {
   const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS"];
 
   const formatEntregaDate = (dateString: string): string => {
+    if (!dateString) return 'Fecha no válida';
+  
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Fecha no válida';
+  
     return new Intl.DateTimeFormat('es-ES', {
       day: '2-digit',
       month: 'long',
@@ -29,6 +33,7 @@ export default function Home() {
       timeZone: 'UTC',
     }).format(date);
   };
+  
 
   const formatFechaCMXDate = (dateString: string): string => {
     const date = new Date(dateString);

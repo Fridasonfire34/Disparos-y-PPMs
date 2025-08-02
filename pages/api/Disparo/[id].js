@@ -1,4 +1,4 @@
-import { Connection, Request } from "tedious";
+import { Connection, Request, TYPES } from "tedious"; // Importa correctamente desde 'tedious'
 
 const config = {
     authentication: {
@@ -68,7 +68,7 @@ export default function handler(req, res) {
         });
 
         // Parametrización para evitar inyecciones SQL
-        request.addParameter("id", require("tedious").TYPES.NVarChar, id);
+        request.addParameter("id", TYPES.NVarChar, id);
 
         connection.execSql(request);
     });
