@@ -57,6 +57,16 @@
   background-color: #fdcf005e;
 }
 
+.buttonGroup button.Detalles {
+  background-color: #0d6e12;
+  transition: background-color 0.3s ease;
+  color: rgb(255, 255, 255);
+}
+
+.buttonGroup button.Detalles :hover {
+  background-color: #0edd18;
+}
+
 .filterInput {
   width: 100%;
   padding: 5px;
@@ -104,4 +114,46 @@
 
 .table td {
   font-size: 12px;
+}
+
+.detallesTitle {
+  text-align: center;
+  font-size: 1.5rem;
+  font-family: 'Poppins', sans-serif;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.detallesButtonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.detallesButtonContainer button {
+  padding: 10px 25px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #60be57;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.detallesButtonContainer button:hover {
+  background-color: #89c783;
+}
+
+.tableTitle {
+  text-align: center;
+  font-size: 1.8rem;
+  font-family: 'Poppins', sans-serif;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  color: #0070f3;
+  font-weight: 600;
 }
