@@ -85,6 +85,8 @@ export default function Home() {
     setShowDetalles(false);
     setIsDetallesActive(false);
     setShowJunta(false);
+    setShowEnviosViper(false);
+    setShowEnviosBoa(false);
 
     if (endpoint !== apiEndpoint) {
       fetchData(endpoint);
@@ -116,7 +118,19 @@ export default function Home() {
   const applyFilters = (data: DisparoData[]) => {
     return data.filter((row) =>
       Object.entries(filters).every(
-        ([key, value]) => value === "" || (row[key] && row[key].toString().toLowerCase().includes(value.toLowerCase()))
+        ([key, value]) => {
+          if (value === "") return true;
+          if (!row[key]) return false;
+          
+          // Para Entrega, comparar contra el valor formateado visible
+          if (key === "Entrega") {
+            const formattedDate = formatEntregaDate(row[key] as string);
+            return formattedDate.toLowerCase().includes(value.toLowerCase());
+          }
+          
+          // Para otras columnas, comparar normalmente
+          return row[key].toString().toLowerCase().includes(value.toLowerCase());
+        }
       )
     );
   };
@@ -304,7 +318,19 @@ export default function Home() {
   const applyEnviosViperFilters = (data: DisparoData[]) => {
     return data.filter((row) =>
       Object.entries(enviosViperFilters).every(
-        ([key, value]) => value === "" || (row[key] && row[key].toString().toLowerCase().includes(value.toLowerCase()))
+        ([key, value]) => {
+          if (value === "") return true;
+          if (!row[key]) return false;
+          
+          // Para Fecha Entrega, comparar contra el valor formateado visible
+          if (key === "Fecha Entrega") {
+            const formattedDate = formatEntregaDate(row[key] as string);
+            return formattedDate.toLowerCase().includes(value.toLowerCase());
+          }
+          
+          // Para otras columnas, comparar normalmente
+          return row[key].toString().toLowerCase().includes(value.toLowerCase());
+        }
       )
     );
   };
@@ -321,7 +347,19 @@ export default function Home() {
   const applyEnviosBoaFilters = (data: DisparoData[]) => {
     return data.filter((row) =>
       Object.entries(enviosBoaFilters).every(
-        ([key, value]) => value === "" || (row[key] && row[key].toString().toLowerCase().includes(value.toLowerCase()))
+        ([key, value]) => {
+          if (value === "") return true;
+          if (!row[key]) return false;
+          
+          // Para Fecha Entrega, comparar contra el valor formateado visible
+          if (key === "Fecha Entrega") {
+            const formattedDate = formatEntregaDate(row[key] as string);
+            return formattedDate.toLowerCase().includes(value.toLowerCase());
+          }
+          
+          // Para otras columnas, comparar normalmente
+          return row[key].toString().toLowerCase().includes(value.toLowerCase());
+        }
       )
     );
   };
@@ -668,6 +706,15 @@ export default function Home() {
                           <input
                             type="text"
                             placeholder="Filtrar Fecha Entrega"
+                            value={enviosViperFilters[key] || ""}
+                            onChange={(e) => handleEnviosViperFilterChange(key, e.target.value)}
+                            className={styles.filterInput}
+                          />
+                        )}
+                        {key === "Estacion" && (
+                          <input
+                            type="text"
+                            placeholder="Filtrar Estacion"
                             value={enviosViperFilters[key] || ""}
                             onChange={(e) => handleEnviosViperFilterChange(key, e.target.value)}
                             className={styles.filterInput}
