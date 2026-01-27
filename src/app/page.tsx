@@ -130,7 +130,6 @@ export default function Home() {
       prev.map((r, idx) => {
         const match = rowKey.id !== undefined ? r.ID === rowKey.id : idx === rowKey.index;
         if (match) {
-          // Rastrear el ID de la fila modificada
           const rowId = r.ID || idx;
           setModifiedRowIds((prevIds) => new Set(prevIds).add(rowId));
         }
@@ -142,7 +141,6 @@ export default function Home() {
   const filteredData = applyFilters(disparoData);
 
   const reorderColumns = (keys: string[], hidden: string[] = columnsToHide): string[] => {
-    // Orden deseado: Linea, Entrega, Secuencia, Qty, PO, columnas especiales, Estatus, Comentarios, Fecha CMX, WK, Caja, Envio
     const priorityOrder = [
       "Linea",
       "Entrega", 
@@ -164,18 +162,15 @@ export default function Home() {
 
     const visibleKeys = keys.filter((k) => !hidden.includes(k));
     
-    // Separar columnas según prioridad
     const ordered: string[] = [];
     const remaining: string[] = [];
     
-    // Primero agregar las columnas en el orden de prioridad
     priorityOrder.forEach(col => {
       if (visibleKeys.includes(col)) {
         ordered.push(col);
       }
     });
     
-    // Luego agregar las que no están en la lista de prioridad
     visibleKeys.forEach(col => {
       if (!priorityOrder.includes(col)) {
         remaining.push(col);
@@ -549,9 +544,11 @@ export default function Home() {
                   const isMediumColumn = key === "Paneles" || key === "Metalicas" || key === "ETA";
                   const isWideColumn = key === "Status Viper" || key === "Status BOA";
                   const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/BoaEnviado");
+                  const isSecuenciaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Secuencia";
+                  const isCajaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Numero de caja enviada";
                   
                   return (
-                    <th key={key} className={isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}>
+                    <th key={key} className={isSecuenciaMEnviado ? styles.secuenciaMEnviadoColumn : isCajaMEnviado ? styles.cajaMEnviadoColumn : isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}>
                       {key === "Numero de caja enviada" ? "Caja" : key === "Orden Produccion" ? "PO" : key === "Hora de envio" ? "Envio" : key}
                       {showFilter && (
                         <input
@@ -633,12 +630,14 @@ export default function Home() {
                     const isMediumColumn = key === "Paneles" || key === "Metalicas" || key === "ETA";
                     const isWideColumn = key === "Status Viper" || key === "Status BOA";
                     const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/BoaEnviado");
+                    const isSecuenciaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Secuencia";
+                    const isCajaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Numero de caja enviada";
 
                     return (
                       <td
                         key={key}
                         style={getRowStyle(row.Estatus, key)}
-                        className={isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}
+                        className={isSecuenciaMEnviado ? styles.secuenciaMEnviadoColumn : isCajaMEnviado ? styles.cajaMEnviadoColumn : isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}
                       >
                         {renderValue()}
                       </td>
@@ -665,13 +664,15 @@ export default function Home() {
                     !hiddenEnviosViperCols.includes(key) ? (
                       <th key={key}>
                         {key === "Numero de caja enviada" ? "Caja" : key}
-                        <input
-                          type="text"
-                          placeholder={`Filtrar ${key === "Numero de caja enviada" ? "Caja" : key}`}
-                          value={enviosViperFilters[key] || ""}
-                          onChange={(e) => handleEnviosViperFilterChange(key, e.target.value)}
-                          className={styles.filterInput}
-                        />
+                        {key === "Fecha Entrega" && (
+                          <input
+                            type="text"
+                            placeholder="Filtrar Fecha Entrega"
+                            value={enviosViperFilters[key] || ""}
+                            onChange={(e) => handleEnviosViperFilterChange(key, e.target.value)}
+                            className={styles.filterInput}
+                          />
+                        )}
                       </th>
                     ) : null
                   )}
@@ -736,13 +737,15 @@ export default function Home() {
                     !hiddenEnviosBoaCols.includes(key) ? (
                       <th key={key}>
                         {key === "Numero de caja enviada" ? "Caja" : key}
-                        <input
-                          type="text"
-                          placeholder={`Filtrar ${key === "Numero de caja enviada" ? "Caja" : key}`}
-                          value={enviosBoaFilters[key] || ""}
-                          onChange={(e) => handleEnviosBoaFilterChange(key, e.target.value)}
-                          className={styles.filterInput}
-                        />
+                        {key === "Fecha Entrega" && (
+                          <input
+                            type="text"
+                            placeholder="Filtrar Fecha Entrega"
+                            value={enviosBoaFilters[key] || ""}
+                            onChange={(e) => handleEnviosBoaFilterChange(key, e.target.value)}
+                            className={styles.filterInput}
+                          />
+                        )}
                       </th>
                     ) : null
                   )}
