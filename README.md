@@ -7,19 +7,23 @@ Sistema de gestión y visualización de disparos con tablas interactivas para se
 ## Características
 
 ### Tablas Principales
+
 - **M Actualizado / M Enviados**: Visualización de disparos M
 - **Viper Actualizado / Viper Enviado**: Gestión de envíos Viper
 - **Boa Actualizado / Boa Enviado**: Control de envíos Boa
 
 ### Tabla Junta 7 AM
+
 Tabla especial con headers agrupados y funcionalidades avanzadas:
 
 #### Headers Agrupados
+
 - **TRAVELER COIL** (color azul claro): Incluye ETA, Status y Fecha Embarque
 - **TRAVELER LINEA** (color rosa): Incluye ETA, Status y Fecha Embarque
 - **TRAVELER SUBA-ESTACION 01** (color rojo): Incluye ETA, Status y Fecha Embarque
 
 #### Funcionalidades
+
 - **Columnas editables**: ETA y Status son editables hasta que Fecha Embarque = "ENVIADO"
 - **Columnas no editables**: Secuencia y todas las Fecha Embarque
 - **Código de colores**:
@@ -29,6 +33,7 @@ Tabla especial con headers agrupados y funcionalidades avanzadas:
 - **Botón Guardar**: Para persistir los cambios realizados
 
 ### Tablas de Envíos
+
 - **Tabla de Envios Viper**: Gestión de envíos Viper
 - **Tabla de Envios BOA**: Gestión de envíos BOA
 

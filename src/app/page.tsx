@@ -28,7 +28,10 @@ export default function Home() {
   const [enviosViperFilters, setEnviosViperFilters] = useState<{ [key: string]: string }>({});
   const [enviosBoaFilters, setEnviosBoaFilters] = useState<{ [key: string]: string }>({});
   const [juntaFilters, setJuntaFilters] = useState<{ [key: string]: string }>({});
-  const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS"];
+  const [modifiedRowIds, setModifiedRowIds] = useState<Set<string | number>>(new Set());
+  const [modifiedJuntaRowIds, setModifiedJuntaRowIds] = useState<Set<string | number>>(new Set());
+  const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
+  const editableMainEndpoints = ["/api/MActualizado", "/api/ViperActualizado", "/api/BoaActualizado"];
 
   const formatEntregaDate = (dateString: string): string => {
     if (!dateString) return 'Fecha no válida';
@@ -81,6 +84,7 @@ export default function Home() {
     setApiEndpoint(endpoint);
     setShowDetalles(false);
     setIsDetallesActive(false);
+    setShowJunta(false);
 
     if (endpoint !== apiEndpoint) {
       fetchData(endpoint);
@@ -117,7 +121,69 @@ export default function Home() {
     );
   };
 
+  const handleMainCellChange = (
+    rowKey: { id?: string | number; index: number },
+    key: string,
+    value: string
+  ) => {
+    setDisparoData((prev) =>
+      prev.map((r, idx) => {
+        const match = rowKey.id !== undefined ? r.ID === rowKey.id : idx === rowKey.index;
+        if (match) {
+          // Rastrear el ID de la fila modificada
+          const rowId = r.ID || idx;
+          setModifiedRowIds((prevIds) => new Set(prevIds).add(rowId));
+        }
+        return match ? { ...r, [key]: value } : r;
+      })
+    );
+  };
+
   const filteredData = applyFilters(disparoData);
+
+  const reorderColumns = (keys: string[], hidden: string[] = columnsToHide): string[] => {
+    // Orden deseado: Linea, Entrega, Secuencia, Qty, PO, columnas especiales, Estatus, Comentarios, Fecha CMX, WK, Caja, Envio
+    const priorityOrder = [
+      "Linea",
+      "Entrega", 
+      "Secuencia",
+      "Qty",
+      "Orden Produccion",
+      "Paneles",
+      "Metalicas", 
+      "ETA",
+      "Status Viper",
+      "Status BOA",
+      "Estatus",
+      "Comentarios",
+      "Fecha CMX",
+      "WK",
+      "Numero de caja enviada",
+      "Hora de envio"
+    ];
+
+    const visibleKeys = keys.filter((k) => !hidden.includes(k));
+    
+    // Separar columnas según prioridad
+    const ordered: string[] = [];
+    const remaining: string[] = [];
+    
+    // Primero agregar las columnas en el orden de prioridad
+    priorityOrder.forEach(col => {
+      if (visibleKeys.includes(col)) {
+        ordered.push(col);
+      }
+    });
+    
+    // Luego agregar las que no están en la lista de prioridad
+    visibleKeys.forEach(col => {
+      if (!priorityOrder.includes(col)) {
+        remaining.push(col);
+      }
+    });
+    
+    return [...ordered, ...remaining];
+  };
 
   const handleDownload = async () => {
     try {
@@ -137,6 +203,40 @@ export default function Home() {
       a.remove();
     } catch (error) {
       console.error('Failed to download file', error);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      const modifiedRows = disparoData.filter((row) => 
+        modifiedRowIds.has(row.ID || disparoData.indexOf(row))
+      );
+
+      if (modifiedRows.length === 0) {
+        alert('No hay cambios para guardar');
+        return;
+      }
+
+      const response = await fetch('/api/DisparoUpdate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(modifiedRows),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Save result:', result);
+      alert(`Guardado exitoso: ${result.successCount} registros actualizados`);
+      
+      setModifiedRowIds(new Set());
+    } catch (error) {
+      console.error('Failed to save changes', error);
+      alert('Error al guardar los datos');
     }
   };
   
@@ -257,16 +357,28 @@ export default function Home() {
       [key]: value,
     };
     setEditedJuntaData(updatedData);
+    
+    const rowId = updatedData[rowIndex].ID || rowIndex;
+    setModifiedJuntaRowIds((prevIds) => new Set(prevIds).add(rowId));
   };
 
   const handleSaveJunta = async () => {
     try {
+      const modifiedRows = editedJuntaData.filter((row, index) => 
+        modifiedJuntaRowIds.has(row.ID || index)
+      );
+
+      if (modifiedRows.length === 0) {
+        alert('No hay cambios para guardar');
+        return;
+      }
+
       const response = await fetch('/api/JuntaUpdate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedJuntaData),
+        body: JSON.stringify(modifiedRows),
       });
 
       if (!response.ok) {
@@ -275,6 +387,8 @@ export default function Home() {
 
       alert('Datos guardados exitosamente');
       setJuntaData(editedJuntaData);
+      
+      setModifiedJuntaRowIds(new Set());
     } catch (error) {
       console.error('Failed to save Junta data', error);
       alert('Error al guardar los datos');
@@ -300,7 +414,7 @@ export default function Home() {
             priority
           />
         </div>
-        <h1 className={styles.title}>Actualización de Disparos</h1>
+        <h1 className={styles.title}>Actualización de Disparo</h1>
 
         <div className={styles.fullWidthContainer}>
           <div className={styles.buttonGroup}>
@@ -353,7 +467,13 @@ export default function Home() {
               }}
             >Detalles Disparo</button>
             <button className={`${styles.button} ${styles.Descargar}`}
-              onClick={(handleDownload)}>Descargar</button>
+              onClick={handleDownload}>Descargar</button>
+            {(apiEndpoint === "/api/MActualizado" || 
+              apiEndpoint === "/api/ViperActualizado" || 
+              apiEndpoint === "/api/BoaActualizado") && (
+              <button className={`${styles.button} ${styles.Guardar}`}
+              onClick={handleSaveChanges}>Guardar</button>
+            )}
           </div>
 
           {showDetalles && (
@@ -390,81 +510,164 @@ export default function Home() {
       </header>
 
       <main className={styles.main}>
-        {showSubButtons && disparoData.length > 0 && (
+        {showSubButtons && disparoData.length > 0 && (() => {
+          let hiddenMainCols = [...columnsToHide];
+          
+          if (apiEndpoint === "/api/MActualizado") {
+            hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA"];
+          }
+          
+          if (apiEndpoint === "/api/MEnviado") {
+            hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA", "Paneles", "Metalicas", "ETA"];
+          }
+          
+          if (apiEndpoint === "/api/ViperActualizado") {
+            hiddenMainCols = [...hiddenMainCols, "Status BOA", "Paneles", "Metalicas", "ETA"];
+          }
+          
+          if (apiEndpoint === "/api/ViperEnviado") {
+            hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA", "Paneles", "Metalicas", "ETA"];
+          }
+          
+          if (apiEndpoint === "/api/BoaActualizado") {
+            hiddenMainCols = [...hiddenMainCols, "Status Viper", "Paneles", "Metalicas", "ETA"];
+          }
+          
+          if (apiEndpoint === "/api/BoaEnviado") {
+            hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA", "Paneles", "Metalicas", "ETA"];
+          }
+
+          return (
+          <div className={styles.tableContainer}>
           <table className={styles.table}>
             <thead>
               <tr>
-                {Object.keys(disparoData[0]).map((key) =>
-                  !columnsToHide.includes(key) ? (
-                    <th key={key}>
-                      {key}
-                      <input
-                        type="text"
-                        placeholder={`Filtrar ${key}`}
-                        value={filters[key] || ""}
-                        onChange={(e) => handleFilterChange(key, e.target.value)}
-                        className={styles.filterInput}
-                      />
+                {reorderColumns(Object.keys(disparoData[0]), hiddenMainCols).map((key) => {
+                  const noFilterColumns = ["Qty", "Paneles", "Metalicas", "ETA", "Comentarios", "Numero de caja enviada", "Status Viper", "Status BOA"];
+                  const showFilter = !noFilterColumns.includes(key);
+                  const isNarrowMColumn = apiEndpoint === "/api/MActualizado" && (key === "Linea" || key === "Secuencia" || key === "Fecha CMX");
+                  const isMediumColumn = key === "Paneles" || key === "Metalicas" || key === "ETA";
+                  const isWideColumn = key === "Status Viper" || key === "Status BOA";
+                  const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/BoaEnviado");
+                  
+                  return (
+                    <th key={key} className={isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}>
+                      {key === "Numero de caja enviada" ? "Caja" : key === "Orden Produccion" ? "PO" : key === "Hora de envio" ? "Envio" : key}
+                      {showFilter && (
+                        <input
+                          type="text"
+                          placeholder={`Filtrar ${key === "Numero de caja enviada" ? "Caja" : key === "Orden Produccion" ? "PO" : key === "Hora de envio" ? "Envio" : key}`}
+                          value={filters[key] || ""}
+                          onChange={(e) => handleFilterChange(key, e.target.value)}
+                          className={styles.filterInput}
+                        />
+                      )}
                     </th>
-                  ) : null
+                  );
+                }
                 )}
               </tr>
             </thead>
             <tbody>
               {filteredData.map((row, index) => (
                 <tr key={index}>
-                  {Object.entries(row).map(([key, value], idx) =>
-                    !columnsToHide.includes(key) ? (
-                      <td
-                        key={idx}
-                        style={getRowStyle(row.Estatus, key)}
-                      >
-                        {key === "Entrega"
-                          ? formatEntregaDate(value as string)
-                          : key === "Fecha CMX"
-                            ? value === null
-                              ? "Revision con planeacion"
-                              : formatFechaCMXDate(value as string)
-                            : value === null
-                              ? ""
-                              : key === "Hora de envio"
-                                ? formatEntregaDate(value as string)
-                                : key === "Orden Produccion" ? (
-                                  <a
-                                    href={`/sequences?id=${row.ID}`}
-                                    style={{ color: 'blue', textDecoration: 'underline' }}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {value}
-                                  </a>
+                  {reorderColumns(Object.keys(row), hiddenMainCols).map((key) => {
+                    const isEditableContext = editableMainEndpoints.includes(apiEndpoint ?? "");
+                    const isStatusViperEditable = apiEndpoint === "/api/ViperActualizado" && key === "Status Viper";
+                    const isStatusBoaEditable = apiEndpoint === "/api/BoaActualizado" && key === "Status BOA";
+                    const isEditableCell = isEditableContext && (key === "Paneles" || key === "Metalicas" || key === "ETA") || isStatusViperEditable || isStatusBoaEditable;
 
-                                ) : (
-                                  value
-                                )
+                    const renderValue = () => {
+                      if (isEditableCell) {
+                        if (key === "Paneles") {
+                          const lineaVal = String(row["Linea"] ?? "");
+                          const allowed = ["39M", "39M+", "39M++"].includes(lineaVal);
+                          if (!allowed) {
+                            return "N/A";
+                          }
                         }
+                        return (
+                          <textarea
+                            value={(row[key] ?? "") as string}
+                            onChange={(e) =>
+                              handleMainCellChange({ id: row.ID as string | number | undefined, index }, key, e.target.value)
+                            }
+                            style={{ width: '101%', padding: '1px', minHeight: '65px', resize: 'vertical', fontFamily: 'Poppins, sans-serif' }}
+                          />
+                        );
+                      }
+
+                      if (key === "Entrega") {
+                        return formatEntregaDate(row[key] as string);
+                      }
+
+                      if (key === "Fecha CMX") {
+                        return row[key] === null ? "Revision con planeacion" : formatFechaCMXDate(row[key] as string);
+                      }
+
+                      if (row[key] === null) {
+                        return "";
+                      }
+
+                      if (key === "Hora de envio") {
+                        return formatEntregaDate(row[key] as string);
+                      }
+
+                      if (key === "Orden Produccion") {
+                        return (
+                          <a
+                            href={`/sequences?id=${row.ID}`}
+                            style={{ color: 'blue', textDecoration: 'underline' }}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {row[key] as string}
+                          </a>
+                        );
+                      }
+
+                      return row[key] as string;
+                    };
+
+                    const isNarrowMColumn = apiEndpoint === "/api/MActualizado" && (key === "Linea" || key === "Secuencia");
+                    const isMediumColumn = key === "Paneles" || key === "Metalicas" || key === "ETA";
+                    const isWideColumn = key === "Status Viper" || key === "Status BOA";
+                    const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/BoaEnviado");
+
+                    return (
+                      <td
+                        key={key}
+                        style={getRowStyle(row.Estatus, key)}
+                        className={isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}
+                      >
+                        {renderValue()}
                       </td>
-                    ) : null
-                  )}
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
+          </div>
+          );
+        })()}
 
-        {showEnviosViper && enviosViperData.length > 0 && (
+        {showEnviosViper && enviosViperData.length > 0 && (() => {
+          const hiddenEnviosViperCols = [...columnsToHide, "Paneles", "Metalicas", "ETA", "Status Viper", "Status BOA"];
+          return (
           <>
             <h2 className={styles.tableTitle}>Envios Viper</h2>
+            <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  {Object.keys(enviosViperData[0]).map((key) =>
-                    !columnsToHide.includes(key) ? (
+                  {reorderColumns(Object.keys(enviosViperData[0]), hiddenEnviosViperCols).map((key) =>
+                    !hiddenEnviosViperCols.includes(key) ? (
                       <th key={key}>
-                        {key}
+                        {key === "Numero de caja enviada" ? "Caja" : key}
                         <input
                           type="text"
-                          placeholder={`Filtrar ${key}`}
+                          placeholder={`Filtrar ${key === "Numero de caja enviada" ? "Caja" : key}`}
                           value={enviosViperFilters[key] || ""}
                           onChange={(e) => handleEnviosViperFilterChange(key, e.target.value)}
                           className={styles.filterInput}
@@ -477,24 +680,24 @@ export default function Home() {
               <tbody>
                 {filteredEnviosViperData.map((row, index) => (
                   <tr key={index}>
-                    {Object.entries(row).map(([key, value], idx) =>
-                      !columnsToHide.includes(key) ? (
+                    {reorderColumns(Object.keys(row), hiddenEnviosViperCols).map((key) =>
+                      !hiddenEnviosViperCols.includes(key) ? (
                         <td
-                          key={idx}
+                          key={key}
                           style={getRowStyle(row.Estatus, key)}
                         >
                           {key === "Fecha Entrega"
-                            ? formatEntregaDate(value as string)
+                            ? formatEntregaDate(row[key] as string)
                             : key === "Entrega"
-                            ? formatEntregaDate(value as string)
+                            ? formatEntregaDate(row[key] as string)
                             : key === "Fecha CMX"
-                              ? value === null
+                              ? row[key] === null
                                 ? "Revision con planeacion"
-                                : formatFechaCMXDate(value as string)
-                              : value === null
+                                : formatFechaCMXDate(row[key] as string)
+                              : row[key] === null
                                 ? ""
                                 : key === "Hora de envio"
-                                  ? formatEntregaDate(value as string)
+                                  ? formatEntregaDate(row[key] as string)
                                   : key === "Orden Produccion" ? (
                                     <a
                                       href={`/sequences?id=${row.ID}`}
@@ -502,10 +705,10 @@ export default function Home() {
                                       target="_blank"
                                       rel="noopener noreferrer"
                                     >
-                                      {value}
+                                      {row[key] as string}
                                     </a>
                                   ) : (
-                                    value
+                                    row[key] as string
                                   )
                           }
                         </td>
@@ -515,22 +718,27 @@ export default function Home() {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
-        )}
+          );
+        })()}
 
-        {showEnviosBoa && enviosBoaData.length > 0 && (
+        {showEnviosBoa && enviosBoaData.length > 0 && (() => {
+          const hiddenEnviosBoaCols = [...columnsToHide, "Paneles", "Metalicas", "ETA", "Status Viper", "Status BOA"];
+          return (
           <>
             <h2 className={styles.tableTitle}>Envios BOA</h2>
+            <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  {Object.keys(enviosBoaData[0]).map((key) =>
-                    !columnsToHide.includes(key) ? (
+                  {reorderColumns(Object.keys(enviosBoaData[0]), hiddenEnviosBoaCols).map((key) =>
+                    !hiddenEnviosBoaCols.includes(key) ? (
                       <th key={key}>
-                        {key}
+                        {key === "Numero de caja enviada" ? "Caja" : key}
                         <input
                           type="text"
-                          placeholder={`Filtrar ${key}`}
+                          placeholder={`Filtrar ${key === "Numero de caja enviada" ? "Caja" : key}`}
                           value={enviosBoaFilters[key] || ""}
                           onChange={(e) => handleEnviosBoaFilterChange(key, e.target.value)}
                           className={styles.filterInput}
@@ -543,24 +751,24 @@ export default function Home() {
               <tbody>
                 {filteredEnviosBoaData.map((row, index) => (
                   <tr key={index}>
-                    {Object.entries(row).map(([key, value], idx) =>
-                      !columnsToHide.includes(key) ? (
+                    {reorderColumns(Object.keys(row), hiddenEnviosBoaCols).map((key) =>
+                      !hiddenEnviosBoaCols.includes(key) ? (
                         <td
-                          key={idx}
+                          key={key}
                           style={getRowStyle(row.Estatus, key)}
                         >
                           {key === "Fecha Entrega"
-                            ? formatEntregaDate(value as string)
+                            ? formatEntregaDate(row[key] as string)
                             : key === "Entrega"
-                            ? formatEntregaDate(value as string)
+                            ? formatEntregaDate(row[key] as string)
                             : key === "Fecha CMX"
-                              ? value === null
+                              ? row[key] === null
                                 ? "Revision con planeacion"
-                                : formatFechaCMXDate(value as string)
-                              : value === null
+                                : formatFechaCMXDate(row[key] as string)
+                              : row[key] === null
                                 ? ""
                                 : key === "Hora de envio"
-                                  ? formatEntregaDate(value as string)
+                                  ? formatEntregaDate(row[key] as string)
                                   : key === "Orden Produccion" ? (
                                     <a
                                       href={`/sequences?id=${row.ID}`}
@@ -568,10 +776,10 @@ export default function Home() {
                                       target="_blank"
                                       rel="noopener noreferrer"
                                     >
-                                      {value}
+                                      {row[key] as string}
                                     </a>
                                   ) : (
-                                    value
+                                    row[key] as string
                                   )
                           }
                         </td>
@@ -581,12 +789,15 @@ export default function Home() {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
-        )}
+          );
+        })()}
 
         {showJunta && juntaData.length > 0 && (
           <>
             <h2 className={styles.tableTitle}>Junta 7 AM</h2>
+            <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
                 {/* First header row with Traveler groups */}
@@ -748,6 +959,7 @@ export default function Home() {
                 })}
               </tbody>
             </table>
+            </div>
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <button 
                 onClick={handleSaveJunta}

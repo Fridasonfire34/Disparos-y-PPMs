@@ -42,7 +42,7 @@ export default function handler(req, res) {
             }
 
             if (rowCount === 0) {
-                res.status(404).json({ error: "No data found" });
+                res.status(200).json([]);
                 connection.close();
                 return;
             }
