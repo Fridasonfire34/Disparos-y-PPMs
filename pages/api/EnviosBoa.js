@@ -30,7 +30,7 @@ export default function handler(req, res) {
         }
 
         const query = `
-            SELECT * FROM [Envios BOA]
+            SELECT * FROM [Envios BOA] ORDER BY [Fecha Entrega] ASC
         `;
 
         const request = new Request(query, (err, rowCount, rows) => {

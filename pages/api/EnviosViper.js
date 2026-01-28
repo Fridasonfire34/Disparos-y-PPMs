@@ -5,17 +5,17 @@ import { Connection, Request } from "tedious";
 const config = {
     authentication: {
         options: {
-            userName: "sa", // Reemplaza con tu usuario
-            password: "TMPdb1124", // Reemplaza con tu contraseña
+            userName: "sa",
+            password: "TMPdb1124",
         },
         type: "default",
     },
-    server: "TMPMX-DEV", // Reemplaza con tu servidor
+    server: "TMPMX-DEV",
     options: {
-        database: "TMP", // Reemplaza con tu base de datos
+        database: "TMP",
         encrypt: true,
-        trustServerCertificate: true, // Aceptar certificados autofirmados
-        rowCollectionOnRequestCompletion: true, // Asegura que las filas se recojan correctamente
+        trustServerCertificate: true,
+        rowCollectionOnRequestCompletion: true,
     },
 };
 
@@ -30,14 +30,14 @@ export default function handler(req, res) {
         }
 
         const query = `
-            SELECT * FROM [Envios Viper]
+            SELECT * FROM [Envios Viper] ORDER BY [Fecha Entrega] ASC, [Estacion] ASC
         `;
 
         const request = new Request(query, (err, rowCount, rows) => {
             if (err) {
                 console.error("Request Failed", err);
                 res.status(500).json({ error: "Request Failed", details: err.message });
-                connection.close(); // Cerrar conexión en caso de error
+                connection.close();
                 return;
             }
 
@@ -56,7 +56,7 @@ export default function handler(req, res) {
             });
 
             res.status(200).json(results);
-            connection.close(); // Cerrar conexión después de enviar los resultados
+            connection.close();
         });
 
         connection.execSql(request);

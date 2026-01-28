@@ -250,10 +250,18 @@ export default function Home() {
   };
   
   const handleDetalles = () => {
-    setShowDetalles(!showDetalles);
+    const newShowDetalles = !showDetalles;
+    setShowDetalles(newShowDetalles);
     setShowSubButtons(false);
     setApiEndpoint(null);
-    setIsDetallesActive(!isDetallesActive);
+    setIsDetallesActive(newShowDetalles);
+    
+    // Solo ocultar las tablas de detalles si estamos cerrando el menú de detalles
+    if (!newShowDetalles) {
+      setShowJunta(false);
+      setShowEnviosViper(false);
+      setShowEnviosBoa(false);
+    }
   };
 
   const handleDetalleButton = async (buttonName: string) => {
