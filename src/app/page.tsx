@@ -108,6 +108,26 @@ export default function Home() {
     return {};
   };
 
+  const getEnviosViperRowStyle = (row: DisparoData): React.CSSProperties => {
+    // Verificar si las columnas específicas están vacías o son null
+    const isEmpty = (value: string | number | null | undefined) => 
+      value === null || value === undefined || value === "" || value === "NULL";
+
+    const enProcesoTraspaleo = isEmpty(row["En proceso de Traspaleo"]);
+    const enviadoPendiente = isEmpty(row["Enviado Pendiente"]);
+    const listoFaltaCarro = isEmpty(row["Listo para enviar - Falta de Carro adecuado"]);
+    const listoPorSubir = isEmpty(row["Listo para enviar - Por subir a caja"]);
+    const disparoNuevo = isEmpty(row["Disparo Nuevo"]);
+    const enviado = !isEmpty(row["Enviado"]);
+
+    // Si todas las columnas especificadas están vacías pero Enviado tiene valor, pintar de verde
+    if (enProcesoTraspaleo && enviadoPendiente && listoFaltaCarro && listoPorSubir && disparoNuevo && enviado) {
+      return { backgroundColor: "green" };
+    }
+
+    return {};
+  };
+
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -122,13 +142,11 @@ export default function Home() {
           if (value === "") return true;
           if (!row[key]) return false;
           
-          // Para Entrega, comparar contra el valor formateado visible
           if (key === "Entrega") {
             const formattedDate = formatEntregaDate(row[key] as string);
             return formattedDate.toLowerCase().includes(value.toLowerCase());
           }
           
-          // Para otras columnas, comparar normalmente
           return row[key].toString().toLowerCase().includes(value.toLowerCase());
         }
       )
@@ -256,7 +274,6 @@ export default function Home() {
     setApiEndpoint(null);
     setIsDetallesActive(newShowDetalles);
     
-    // Solo ocultar las tablas de detalles si estamos cerrando el menú de detalles
     if (!newShowDetalles) {
       setShowJunta(false);
       setShowEnviosViper(false);
@@ -330,13 +347,11 @@ export default function Home() {
           if (value === "") return true;
           if (!row[key]) return false;
           
-          // Para Fecha Entrega, comparar contra el valor formateado visible
           if (key === "Fecha Entrega") {
             const formattedDate = formatEntregaDate(row[key] as string);
             return formattedDate.toLowerCase().includes(value.toLowerCase());
           }
           
-          // Para otras columnas, comparar normalmente
           return row[key].toString().toLowerCase().includes(value.toLowerCase());
         }
       )
@@ -359,13 +374,11 @@ export default function Home() {
           if (value === "") return true;
           if (!row[key]) return false;
           
-          // Para Fecha Entrega, comparar contra el valor formateado visible
           if (key === "Fecha Entrega") {
             const formattedDate = formatEntregaDate(row[key] as string);
             return formattedDate.toLowerCase().includes(value.toLowerCase());
           }
           
-          // Para otras columnas, comparar normalmente
           return row[key].toString().toLowerCase().includes(value.toLowerCase());
         }
       )
@@ -740,7 +753,7 @@ export default function Home() {
                       !hiddenEnviosViperCols.includes(key) ? (
                         <td
                           key={key}
-                          style={getRowStyle(row.Estatus, key)}
+                          style={getEnviosViperRowStyle(row)}
                         >
                           {key === "Fecha Entrega"
                             ? formatEntregaDate(row[key] as string)
@@ -813,7 +826,7 @@ export default function Home() {
                       !hiddenEnviosBoaCols.includes(key) ? (
                         <td
                           key={key}
-                          style={getRowStyle(row.Estatus, key)}
+                          style={getEnviosViperRowStyle(row)}
                         >
                           {key === "Fecha Entrega"
                             ? formatEntregaDate(row[key] as string)
