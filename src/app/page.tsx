@@ -30,7 +30,7 @@ export default function Home() {
   const [juntaFilters, setJuntaFilters] = useState<{ [key: string]: string }>({});
   const [modifiedRowIds, setModifiedRowIds] = useState<Set<string | number>>(new Set());
   const [modifiedJuntaRowIds, setModifiedJuntaRowIds] = useState<Set<string | number>>(new Set());
-  const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
+  const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad", "Entrega"];
   const editableMainEndpoints = ["/api/MActualizado", "/api/ViperActualizado", "/api/BoaActualizado"];
 
   const formatEntregaDate = (dateString: string): string => {

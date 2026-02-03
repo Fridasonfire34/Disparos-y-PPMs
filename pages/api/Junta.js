@@ -30,7 +30,7 @@ export default function handler(req, res) {
         }
 
         const query = `
-            SELECT * FROM [Junta 7AM]
+            SELECT * FROM [Junta 7AM] ORDER BY [Entrega] ASC
         `;
 
         const request = new Request(query, (err, rowCount, rows) => {
