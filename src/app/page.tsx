@@ -30,7 +30,7 @@ export default function Home() {
   const [juntaFilters, setJuntaFilters] = useState<{ [key: string]: string }>({});
   const [modifiedRowIds, setModifiedRowIds] = useState<Set<string | number>>(new Set());
   const [modifiedJuntaRowIds, setModifiedJuntaRowIds] = useState<Set<string | number>>(new Set());
-  const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad", "Entrega"];
+  const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
   const editableMainEndpoints = ["/api/MActualizado", "/api/ViperActualizado", "/api/BoaActualizado"];
 
   const formatEntregaDate = (dateString: string): string => {
@@ -874,6 +874,7 @@ export default function Home() {
                 {/* First header row with Traveler groups */}
                 <tr>
                   {Object.keys(juntaData[0]).map((key) => {
+                    if (columnsToHide.includes(key) || key === "Entrega") return null;
                     if (key === "Secuencia") {
                       return (
                         <th key={key} rowSpan={2}>
@@ -915,7 +916,7 @@ export default function Home() {
                 {/* Second header row with individual columns */}
                 <tr>
                   {Object.keys(juntaData[0]).map((key) => {
-                    if (!columnsToHide.includes(key) && key !== "Secuencia") {
+                    if (!columnsToHide.includes(key) && key !== "Secuencia" && key !== "Entrega") {
                       let displayName = key;
                       if (key === "ETA Coil") {
                         displayName = "ETA";
@@ -973,7 +974,7 @@ export default function Home() {
                   return (
                     <tr key={index}>
                       {Object.entries(row).map(([key, value], idx) => {
-                        if (columnsToHide.includes(key)) return null;
+                        if (columnsToHide.includes(key) || key === "Entrega") return null;
                         
                         const isNonEditable = 
                           key === "Secuencia" || 
