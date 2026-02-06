@@ -458,6 +458,13 @@ export default function Home() {
       }}
     >
       <header className={styles.header}>
+        <button
+          className={styles.ppmButton}
+          type="button"
+          onClick={() => window.open("/ppms", "_blank", "noopener,noreferrer")}
+        >
+          PPMs Internos
+        </button>
         <div className={styles.logoContainer}>
           <Image
             className={styles.logo}

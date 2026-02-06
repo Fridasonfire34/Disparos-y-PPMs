@@ -1,0 +1,170 @@
+.tableContainer {
+  width: 90%;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tableTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgb(248, 170, 0);
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.noData {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Poppins', sans-serif;
+}
+
+.table thead {
+  background-color: rgb(248, 170, 0);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-bottom: 2px solid rgb(240, 212, 90);
+}
+
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(248, 170, 0, 0.1);
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.editButton {
+  color: #d1ab00;
+  border: 2px solid #000000;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  padding: 0.20rem;
+  transition: transform 0.2s ease;
+}
+
+.editButton:hover {
+  transform: scale(1.2);
+}
+
+.verButton {
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  color: rgb(0, 0, 0);
+  background-color: rgb(243, 199, 2);
+  border: 2px solid rgb(253, 212, 27);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.verButton:hover {
+  background-color: rgb(255, 255, 255);
+  transform: translateY(-2px);
+  color: rgb(0, 0, 0);
+}
+
+.editInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid rgb(248, 170, 0);
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: rgb(240, 212, 90);
+  box-shadow: 0 0 0 2px rgba(248, 170, 0, 0.2);
+}
+
+.saveButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: white;
+  background-color: rgb(76, 175, 80);
+  border: 2px solid rgb(56, 142, 60);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.saveButton:hover {
+  background-color: rgb(56, 142, 60);
+  transform: translateY(-2px);
+}
+
+.cancelButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: rgb(120, 0, 0);
+  background-color: rgb(255, 220, 220);
+  border: 2px solid rgb(240, 180, 180);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+  background-color: rgb(255, 200, 200);
+  transform: translateY(-2px);
+}
+
+.verButtonDisabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}

@@ -12,6 +12,11 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+const poppins = localFont({
+  src: "../../public/PPMs/fonts/Poppins-Regular.ttf",
+  variable: "--font-poppins",
+  weight: "400",
+});
 
 export const metadata: Metadata = {
   title: "Disparos",
@@ -25,7 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable}`}
+      >
         {children}
       </body>
     </html>
