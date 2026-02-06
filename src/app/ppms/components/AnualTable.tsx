@@ -6,7 +6,7 @@ import styles from './AnualTable.module.css';
 interface AnualRow {
   Mes: string;
   Año: number;
-  [key: string]: any;
+  [key: string]: string | number | null | undefined;
 }
 
 interface AnualTableProps {
@@ -129,7 +129,7 @@ export default function AnualTable({ data, año, onViewClick }: AnualTableProps)
             {(isEditing ? editedData : tableData).map((row, index) => (
               <tr key={index}>
                 <td>{row.Mes}</td>
-                <td>{row.Año}</td>
+                <td>{row.Año ?? '-'}</td>
                 <td>
                   {isEditing ? (
                     <input

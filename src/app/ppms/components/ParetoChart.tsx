@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  type XAxisTickContentProps,
 } from 'recharts';
 import styles from './ParetoChart.module.css';
 
@@ -28,12 +29,13 @@ interface ParetoChartProps {
   useHistorical?: boolean;
 }
 
-const CustomizedAxisTick = (props: any) => {
-  const { x, y, payload } = props;
-  const words = payload.value.split(' ');
+const CustomizedAxisTick = ({ x, y, payload }: XAxisTickContentProps) => {
+  const xPos = typeof x === 'number' ? x : Number(x ?? 0);
+  const yPos = typeof y === 'number' ? y : Number(y ?? 0);
+  const words = String(payload?.value ?? '').split(' ');
   
   return (
-    <g transform={`translate(${x},${y})`}>
+    <g transform={`translate(${xPos},${yPos})`}>
       <text
         x={0}
         y={0}
@@ -121,7 +123,7 @@ export default function ParetoChart({ data, module, semana, total, año, useHist
             dataKey="defecto" 
             height={80}
             interval={0}
-            tick={<CustomizedAxisTick />}
+            tick={CustomizedAxisTick}
           />
           <YAxis 
             yAxisId="left"

@@ -26,7 +26,8 @@ export default async function handler(
     return res.status(400).json({ message: 'Año is required' });
   }
 
-  let pool;
+  let pool: sql.ConnectionPool | undefined;
+  type SemanaRow = { Semana: string };
   try {
     pool = await sql.connect(config);
     
@@ -51,7 +52,8 @@ export default async function handler(
       `;
     }
     
-    const semanas = result.recordset.map((row: any) => row.Semana);
+    const recordset = result.recordset as SemanaRow[];
+    const semanas = recordset.map((row) => row.Semana);
     
     res.status(200).json(semanas);
   } catch (error) {

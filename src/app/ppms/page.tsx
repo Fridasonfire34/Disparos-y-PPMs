@@ -32,6 +32,23 @@ interface UploadedRow {
   tipo: string;
 }
 
+interface AnualRow {
+  Mes: string;
+  Año: number;
+  Escapes?: number | null;
+  Embarcado?: number | null;
+  PPMs?: number | null;
+  Target?: number | null;
+  [key: string]: string | number | null | undefined;
+}
+
+interface ParetoResponse {
+  data: ParetoData[];
+  total: number;
+  module: string;
+  semana: string;
+}
+
 export default function Home() {
   const excelInputRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
@@ -43,10 +60,10 @@ export default function Home() {
   const [activeButton, setActiveButton] = useState<string>('');
   const [paretoData, setParetoData] = useState<ParetoData[] | null>(null);
   const [paretoInfo, setParetoInfo] = useState<{ module: string; semana: string; año: string; total: number; useHistorical?: boolean } | null>(null);
-  const [anualData, setAnualData] = useState<any[] | null>(null);
+  const [anualData, setAnualData] = useState<AnualRow[] | null>(null);
   const [anualYear, setAnualYear] = useState<string>('');
   const [showAnualChart, setShowAnualChart] = useState(false);
-  const [anualChartData, setAnualChartData] = useState<any[] | null>(null);
+  const [anualChartData, setAnualChartData] = useState<AnualRow[] | null>(null);
   const [uploadFileName, setUploadFileName] = useState<string>('');
   const [uploadRows, setUploadRows] = useState<UploadedRow[]>([]);
   const hasUploadData = uploadRows.length > 0;
@@ -62,7 +79,7 @@ export default function Home() {
         setSemanaActualLabel('Error al cargar');
         return;
       }
-      const data = await response.json();
+      const data = (await response.json()) as { semana?: string; año?: string };
       const semana = data?.semana;
       if (semana) {
         const semanaTexto = String(semana);
@@ -98,7 +115,7 @@ export default function Home() {
           : `/api/PPMs/aoos?tipo=${selectedModule}`;
         const response = await fetch(url);
         if (response.ok) {
-          const data = await response.json();
+          const data = (await response.json()) as string[];
           setAños(data);
         }
       } catch (error) {
@@ -126,7 +143,7 @@ export default function Home() {
           : `/api/PPMs/semanas?año=${selectedYear}&tipo=${selectedModule}`;
         const response = await fetch(url);
         if (response.ok) {
-          const data = await response.json();
+          const data = (await response.json()) as string[];
           setSemanas(data);
         }
       } catch (error) {
@@ -167,7 +184,7 @@ export default function Home() {
         });
 
         if (response.ok) {
-          const result = await response.json();
+          const result = (await response.json()) as { data: AnualRow[] };
           setAnualData(result.data);
           setAnualYear(selectedYear);
           setShowForm(false);
@@ -188,15 +205,15 @@ export default function Home() {
     try {
       const paretoResponse = await fetch(`/api/PPMs/pareto?module=${selectedModule}&semana=${selectedWeek}&año=${selectedYear}&useHistorical=true`);
       if (paretoResponse.ok) {
-        const paretoResult = await paretoResponse.json();
+        const paretoResult = (await paretoResponse.json()) as ParetoResponse;
         setParetoData(paretoResult.data);
-        setParetoInfo({
-          module: paretoResult.module,
-          semana: paretoResult.semana,
-          año: selectedYear,
-          total: paretoResult.total,
-          useHistorical: true
-        });
+          setParetoInfo({
+            module: paretoResult.module,
+            semana: paretoResult.semana,
+            año: selectedYear,
+            total: paretoResult.total,
+            useHistorical: true
+          });
         setShowForm(false);
       }
     } catch (error) {
@@ -208,13 +225,16 @@ export default function Home() {
     try {
       const semanaResponse = await fetch('/api/PPMs/semanaActual');
       if (semanaResponse.ok) {
-        const semanaData = await semanaResponse.json();
+        const semanaData = (await semanaResponse.json()) as { semana?: string; año?: string };
         const semanaActual = semanaData.semana;
-        const añoActual = semanaData.año;
+        const añoActual = String(semanaData.año ?? '');
+        if (!semanaActual || !añoActual) {
+          return;
+        }
         
         const paretoResponse = await fetch(`/api/PPMs/pareto?module=${selectedModule}&semana=${semanaActual}&año=${añoActual}`);
         if (paretoResponse.ok) {
-          const paretoResult = await paretoResponse.json();
+          const paretoResult = (await paretoResponse.json()) as ParetoResponse;
           setParetoData(paretoResult.data);
           setParetoInfo({
             module: paretoResult.module,
@@ -234,13 +254,13 @@ export default function Home() {
     excelInputRef.current?.click();
   };
 
-  const getCellValue = (row: any[], index: number) => {
+  const getCellValue = (row: unknown[], index: number) => {
     const value = row[index];
     if (value === null || value === undefined) return '';
     return String(value).trim();
   };
 
-  const parseExcelDate = (value: any) => {
+  const parseExcelDate = (value: unknown) => {
     if (value instanceof Date && !Number.isNaN(value.getTime())) {
       return value.toISOString().split('T')[0];
     }
@@ -264,7 +284,7 @@ export default function Home() {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: '' });
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: '' });
 
       const map = new Map<string, UploadedRow>();
 
@@ -341,7 +361,7 @@ export default function Home() {
         });
 
         if (response.ok) {
-          const result = await response.json();
+          const result = (await response.json()) as { results: Record<string, { producto: string; tipo: string }> };
           const lookup = result.results as Record<string, { producto: string; tipo: string }>;
           setUploadRows((current) => current.map((row) => ({
             ...row,
@@ -395,7 +415,7 @@ export default function Home() {
           return;
         }
 
-        const result = await response.json();
+        const result = (await response.json()) as { count: number; semana: string; año: string };
         alert(`Datos guardados correctamente: ${result.count} registros en ${result.semana} del año ${result.año}`);
         handleUploadCancel();
         await fetchSemanaActual();
@@ -414,7 +434,7 @@ export default function Home() {
     <div className={styles.container}>
       <div className={styles.titleRow}>
         <h1 className={styles.title}>
-          PPM's Internos
+          PPMs Internos
         </h1>
         <div className={styles.headerActions}>
           <input

@@ -50,7 +50,8 @@ export default async function handler(
     return res.status(400).json({ message: 'Invalid module' });
   }
 
-  let pool;
+  let pool: sql.ConnectionPool | undefined;
+  type ParetoRow = { Defecto: string; Frecuencia: number; Acumulado: number };
   try {
     pool = await sql.connect(config);
 
@@ -69,13 +70,14 @@ export default async function handler(
       .input('año', sql.VarChar, año)
       .query(query);
 
-    const paretoData = result.recordset.map((row: any) => ({
+    const recordset = result.recordset as ParetoRow[];
+    const paretoData = recordset.map((row) => ({
       defecto: row.Defecto,
       frecuencia: row.Frecuencia,
       acumulado: row.Acumulado.toFixed(2),
     }));
 
-    const total = result.recordset.reduce((sum: number, row: any) => sum + row.Frecuencia, 0);
+    const total = recordset.reduce((sum, row) => sum + row.Frecuencia, 0);
 
     res.status(200).json({
       data: paretoData,

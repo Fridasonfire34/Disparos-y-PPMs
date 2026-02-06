@@ -22,7 +22,8 @@ export default async function handler(
 
   const { tipo } = req.query;
 
-  let pool;
+  let pool: sql.ConnectionPool | undefined;
+  type AoosRow = { Año: string | number };
   try {
     pool = await sql.connect(config);
     
@@ -33,7 +34,8 @@ export default async function handler(
       result = await pool.query`SELECT DISTINCT [Año] FROM [Reordenes Anteriores] ORDER BY [Año]`;
     }
     
-    const años = result.recordset.map((row: any) => row.Año);
+    const recordset = result.recordset as AoosRow[];
+    const años = recordset.map((row) => row.Año);
     
     res.status(200).json(años);
   } catch (error) {

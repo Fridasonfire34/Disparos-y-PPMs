@@ -4,17 +4,15 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import styles from './AnualChart.module.css';
 
-interface AnualRow {
+interface AnualChartRow {
   Mes: string;
-  Año: number;
-  Escapes: number;
-  Embarcado: number;
-  PPMs: number;
-  Target: number;
+  PPMs?: number | null;
+  Target?: number | null;
+  [key: string]: string | number | null | undefined;
 }
 
 interface AnualChartProps {
-  data: AnualRow[];
+  data: AnualChartRow[];
   año: string;
   onBack: () => void;
 }

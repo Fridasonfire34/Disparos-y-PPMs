@@ -49,6 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const tableName = isHistorical ? 'Reordenes Anteriores' : 'Reordenes';
 
   let pool: sql.ConnectionPool | undefined;
+  type ReordenRow = Record<string, string | number | null | Date>;
   try {
     pool = await sql.connect(config);
 
@@ -83,7 +84,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .input('tipo', sql.VarChar, tipo)
       .query(query);
 
-    const data = result.recordset.map((row: any) => ({
+    const recordset = result.recordset as ReordenRow[];
+    const data = recordset.map((row) => ({
       'Folio Reorden': row['Folio Reorden'],
       'Empleado': row['Empleado'],
       'Area': row['Area'],
