@@ -48,7 +48,7 @@ export default function ActionTable({ module, semana, año, useHistorical = fals
       try {
         setLoading(true);
         const historicalParam = useHistorical ? '&useHistorical=true' : '';
-        const response = await fetch(`/api/actionPlan?module=${module}&semana=${semana}&año=${año}${historicalParam}`);
+        const response = await fetch(`/api/PPMs/actionPlan?module=${module}&semana=${semana}&año=${año}${historicalParam}`);
         if (response.ok) {
           const result = await response.json();
           setData(result.data);
@@ -82,7 +82,7 @@ export default function ActionTable({ module, semana, año, useHistorical = fals
 
     try {
       const row = data[index];
-      const response = await fetch('/api/updateActionPlan', {
+      const response = await fetch('/api/PPMs/updateActionPlan', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ export default function ActionTable({ module, semana, año, useHistorical = fals
   const handleStatusChange = async (index: number, newStatus: string) => {
     try {
       const row = data[index];
-      const response = await fetch('/api/updateStatus', {
+      const response = await fetch('/api/PPMs/updateStatus', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

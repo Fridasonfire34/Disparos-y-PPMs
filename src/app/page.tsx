@@ -31,7 +31,7 @@ export default function Home() {
   const [modifiedRowIds, setModifiedRowIds] = useState<Set<string | number>>(new Set());
   const [modifiedJuntaRowIds, setModifiedJuntaRowIds] = useState<Set<string | number>>(new Set());
   const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
-  const editableMainEndpoints = ["/api/MActualizado", "/api/ViperActualizado", "/api/BoaActualizado"];
+  const editableMainEndpoints = ["/api/Disparo/MActualizado", "/api/Disparo/ViperActualizado", "/api/Disparo/BoaActualizado"];
 
   const formatEntregaDate = (dateString: string): string => {
     if (!dateString) return 'Fecha no válida';
@@ -214,7 +214,7 @@ export default function Home() {
 
   const handleDownload = async () => {
     try {
-      const response = await fetch('/api/Descarga');
+      const response = await fetch('/api/Disparo/Descarga');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -244,7 +244,7 @@ export default function Home() {
         return;
       }
 
-      const response = await fetch('/api/DisparoUpdate', {
+      const response = await fetch('/api/Disparo/DisparoUpdate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -284,7 +284,7 @@ export default function Home() {
   const handleDetalleButton = async (buttonName: string) => {
     if (buttonName === "Junta 7 am") {
       try {
-        const response = await fetch('/api/Junta');
+        const response = await fetch('/api/Disparo/Junta');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -300,7 +300,7 @@ export default function Home() {
       }
     } else if (buttonName === "Tabla de Envios Viper") {
       try {
-        const response = await fetch('/api/EnviosViper');
+        const response = await fetch('/api/Disparo/EnviosViper');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -315,7 +315,7 @@ export default function Home() {
       }
     } else if (buttonName === "Tabla de Envios BOA") {
       try {
-        const response = await fetch('/api/EnviosBoa');
+        const response = await fetch('/api/Disparo/EnviosBoa');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -427,7 +427,7 @@ export default function Home() {
         return;
       }
 
-      const response = await fetch('/api/JuntaUpdate', {
+      const response = await fetch('/api/Disparo/JuntaUpdate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -480,46 +480,46 @@ export default function Home() {
         <div className={styles.fullWidthContainer}>
           <div className={styles.buttonGroup}>
             <button
-              onClick={() => handleButtonClick("/api/MActualizado")}
+              onClick={() => handleButtonClick("/api/Disparo/MActualizado")}
               style={{
-                backgroundColor: apiEndpoint === "/api/MActualizado" ? "lightblue" : "",
+                backgroundColor: apiEndpoint === "/api/Disparo/MActualizado" ? "lightblue" : "",
               }}
             >
               M Actualizado
             </button>
             <button
-              onClick={() => handleButtonClick("/api/MEnviado")}
+              onClick={() => handleButtonClick("/api/Disparo/MEnviado")}
               style={{
-                backgroundColor: apiEndpoint === "/api/MEnviado" ? "lightblue" : "",
+                backgroundColor: apiEndpoint === "/api/Disparo/MEnviado" ? "lightblue" : "",
               }}
             >
               M Enviados
             </button>
             <button
-              onClick={() => handleButtonClick("/api/ViperActualizado")}
+              onClick={() => handleButtonClick("/api/Disparo/ViperActualizado")}
               style={{
-                backgroundColor: apiEndpoint === "/api/ViperActualizado" ? "lightblue" : "",
+                backgroundColor: apiEndpoint === "/api/Disparo/ViperActualizado" ? "lightblue" : "",
               }}
             >
               Viper Actualizado</button>
             <button
-              onClick={() => handleButtonClick("/api/ViperEnviado")}
+              onClick={() => handleButtonClick("/api/Disparo/ViperEnviado")}
               style={{
-                backgroundColor: apiEndpoint === "/api/ViperEnviado" ? "lightblue" : "",
+                backgroundColor: apiEndpoint === "/api/Disparo/ViperEnviado" ? "lightblue" : "",
               }}
             >
               Viper Enviado</button>
             <button
-              onClick={() => handleButtonClick("/api/BoaActualizado")}
+              onClick={() => handleButtonClick("/api/Disparo/BoaActualizado")}
               style={{
-                backgroundColor: apiEndpoint === "/api/BoaActualizado" ? "lightblue" : "",
+                backgroundColor: apiEndpoint === "/api/Disparo/BoaActualizado" ? "lightblue" : "",
               }}
             >
               Boa Actualizado</button>
             <button
-              onClick={() => handleButtonClick("/api/BoaEnviado")}
+              onClick={() => handleButtonClick("/api/Disparo/BoaEnviado")}
               style={{
-                backgroundColor: apiEndpoint === "/api/BoaEnviado" ? "lightblue" : "",
+                backgroundColor: apiEndpoint === "/api/Disparo/BoaEnviado" ? "lightblue" : "",
               }}>Boa Enviado</button>
             <button className={`${styles.button} ${styles.Detalles}`}
               onClick={handleDetalles}
@@ -529,9 +529,9 @@ export default function Home() {
             >Detalles Disparo</button>
             <button className={`${styles.button} ${styles.Descargar}`}
               onClick={handleDownload}>Descargar</button>
-            {(apiEndpoint === "/api/MActualizado" || 
-              apiEndpoint === "/api/ViperActualizado" || 
-              apiEndpoint === "/api/BoaActualizado") && (
+            {(apiEndpoint === "/api/Disparo/MActualizado" || 
+              apiEndpoint === "/api/Disparo/ViperActualizado" || 
+              apiEndpoint === "/api/Disparo/BoaActualizado") && (
               <button className={`${styles.button} ${styles.Guardar}`}
               onClick={handleSaveChanges}>Guardar</button>
             )}
@@ -574,27 +574,27 @@ export default function Home() {
         {showSubButtons && disparoData.length > 0 && (() => {
           let hiddenMainCols = [...columnsToHide];
           
-          if (apiEndpoint === "/api/MActualizado") {
+          if (apiEndpoint === "/api/Disparo/MActualizado") {
             hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA"];
           }
           
-          if (apiEndpoint === "/api/MEnviado") {
+          if (apiEndpoint === "/api/Disparo/MEnviado") {
             hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA", "Paneles", "Metalicas", "ETA"];
           }
           
-          if (apiEndpoint === "/api/ViperActualizado") {
+          if (apiEndpoint === "/api/Disparo/ViperActualizado") {
             hiddenMainCols = [...hiddenMainCols, "Status BOA", "Paneles", "Metalicas", "ETA"];
           }
           
-          if (apiEndpoint === "/api/ViperEnviado") {
+          if (apiEndpoint === "/api/Disparo/ViperEnviado") {
             hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA", "Paneles", "Metalicas", "ETA"];
           }
           
-          if (apiEndpoint === "/api/BoaActualizado") {
+          if (apiEndpoint === "/api/Disparo/BoaActualizado") {
             hiddenMainCols = [...hiddenMainCols, "Status Viper", "Paneles", "Metalicas", "ETA"];
           }
           
-          if (apiEndpoint === "/api/BoaEnviado") {
+          if (apiEndpoint === "/api/Disparo/BoaEnviado") {
             hiddenMainCols = [...hiddenMainCols, "Status Viper", "Status BOA", "Paneles", "Metalicas", "ETA"];
           }
 
@@ -606,12 +606,12 @@ export default function Home() {
                 {reorderColumns(Object.keys(disparoData[0]), hiddenMainCols).map((key) => {
                   const noFilterColumns = ["Qty", "Paneles", "Metalicas", "ETA", "Comentarios", "Numero de caja enviada", "Status Viper", "Status BOA"];
                   const showFilter = !noFilterColumns.includes(key);
-                  const isNarrowMColumn = apiEndpoint === "/api/MActualizado" && (key === "Linea" || key === "Secuencia" || key === "Fecha CMX");
+                  const isNarrowMColumn = apiEndpoint === "/api/Disparo/MActualizado" && (key === "Linea" || key === "Secuencia" || key === "Fecha CMX");
                   const isMediumColumn = key === "Paneles" || key === "Metalicas" || key === "ETA";
                   const isWideColumn = key === "Status Viper" || key === "Status BOA";
-                  const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/BoaEnviado");
-                  const isSecuenciaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Secuencia";
-                  const isCajaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Numero de caja enviada";
+                  const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/Disparo/MEnviado" || apiEndpoint === "/api/Disparo/BoaEnviado");
+                  const isSecuenciaMEnviado = (apiEndpoint === "/api/Disparo/MEnviado" || apiEndpoint === "/api/Disparo/ViperEnviado" || apiEndpoint === "/api/Disparo/BoaEnviado") && key === "Secuencia";
+                  const isCajaMEnviado = (apiEndpoint === "/api/Disparo/MEnviado" || apiEndpoint === "/api/Disparo/ViperEnviado" || apiEndpoint === "/api/Disparo/BoaEnviado") && key === "Numero de caja enviada";
                   
                   return (
                     <th key={key} className={isSecuenciaMEnviado ? styles.secuenciaMEnviadoColumn : isCajaMEnviado ? styles.cajaMEnviadoColumn : isNarrowMColumn ? styles.narrowMColumn : isMediumColumn ? styles.mediumColumn : isWideColumn ? styles.wideColumn : isComentariosColumn ? styles.comentariosColumn : ""}>
@@ -636,8 +636,8 @@ export default function Home() {
                 <tr key={index}>
                   {reorderColumns(Object.keys(row), hiddenMainCols).map((key) => {
                     const isEditableContext = editableMainEndpoints.includes(apiEndpoint ?? "");
-                    const isStatusViperEditable = apiEndpoint === "/api/ViperActualizado" && key === "Status Viper";
-                    const isStatusBoaEditable = apiEndpoint === "/api/BoaActualizado" && key === "Status BOA";
+                    const isStatusViperEditable = apiEndpoint === "/api/Disparo/ViperActualizado" && key === "Status Viper";
+                    const isStatusBoaEditable = apiEndpoint === "/api/Disparo/BoaActualizado" && key === "Status BOA";
                     const isEditableCell = isEditableContext && (key === "Paneles" || key === "Metalicas" || key === "ETA") || isStatusViperEditable || isStatusBoaEditable;
 
                     const renderValue = () => {
@@ -692,12 +692,12 @@ export default function Home() {
                       return row[key] as string;
                     };
 
-                    const isNarrowMColumn = apiEndpoint === "/api/MActualizado" && (key === "Linea" || key === "Secuencia");
+                    const isNarrowMColumn = apiEndpoint === "/api/Disparo/MActualizado" && (key === "Linea" || key === "Secuencia");
                     const isMediumColumn = key === "Paneles" || key === "Metalicas" || key === "ETA";
                     const isWideColumn = key === "Status Viper" || key === "Status BOA";
-                    const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/BoaEnviado");
-                    const isSecuenciaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Secuencia";
-                    const isCajaMEnviado = (apiEndpoint === "/api/MEnviado" || apiEndpoint === "/api/ViperEnviado" || apiEndpoint === "/api/BoaEnviado") && key === "Numero de caja enviada";
+                    const isComentariosColumn = key === "Comentarios" && (apiEndpoint === "/api/Disparo/MEnviado" || apiEndpoint === "/api/Disparo/BoaEnviado");
+                    const isSecuenciaMEnviado = (apiEndpoint === "/api/Disparo/MEnviado" || apiEndpoint === "/api/Disparo/ViperEnviado" || apiEndpoint === "/api/Disparo/BoaEnviado") && key === "Secuencia";
+                    const isCajaMEnviado = (apiEndpoint === "/api/Disparo/MEnviado" || apiEndpoint === "/api/Disparo/ViperEnviado" || apiEndpoint === "/api/Disparo/BoaEnviado") && key === "Numero de caja enviada";
 
                     return (
                       <td

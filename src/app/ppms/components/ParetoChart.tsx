@@ -72,7 +72,7 @@ export default function ParetoChart({ data, module, semana, total, año, useHist
       useHistorical: useHistorical ? 'true' : 'false',
     });
 
-    const response = await fetch(`/api/paretoDownload?${params.toString()}`);
+    const response = await fetch(`/api/PPMs/paretoDownload?${params.toString()}`);
     if (!response.ok) {
       alert('No se pudo generar el Excel');
       return;

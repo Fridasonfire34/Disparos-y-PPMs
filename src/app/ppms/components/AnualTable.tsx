@@ -29,7 +29,7 @@ export default function AnualTable({ data, año, onViewClick }: AnualTableProps)
 
   const handleSaveClick = async () => {
     try {
-      const response = await fetch('/api/updateAnual', {
+      const response = await fetch('/api/PPMs/updateAnual', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

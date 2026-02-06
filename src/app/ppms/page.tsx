@@ -57,7 +57,7 @@ export default function Home() {
 
   const fetchSemanaActual = async () => {
     try {
-      const response = await fetch('/api/semanaActual');
+      const response = await fetch('/api/PPMs/semanaActual');
       if (!response.ok) {
         setSemanaActualLabel('Error al cargar');
         return;
@@ -94,8 +94,8 @@ export default function Home() {
       
       try {
         const url = selectedModule === 'Anual' 
-          ? '/api/aoos' 
-          : `/api/aoos?tipo=${selectedModule}`;
+          ? '/api/PPMs/aoos' 
+          : `/api/PPMs/aoos?tipo=${selectedModule}`;
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
@@ -122,8 +122,8 @@ export default function Home() {
 
       try {
         const url = selectedModule === 'Anual' 
-          ? `/api/semanas?año=${selectedYear}` 
-          : `/api/semanas?año=${selectedYear}&tipo=${selectedModule}`;
+          ? `/api/PPMs/semanas?año=${selectedYear}` 
+          : `/api/PPMs/semanas?año=${selectedYear}&tipo=${selectedModule}`;
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
@@ -156,7 +156,7 @@ export default function Home() {
       }
 
       try {
-        const response = await fetch('/api/anual', {
+        const response = await fetch('/api/PPMs/anual', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ export default function Home() {
     }
 
     try {
-      const paretoResponse = await fetch(`/api/pareto?module=${selectedModule}&semana=${selectedWeek}&año=${selectedYear}&useHistorical=true`);
+      const paretoResponse = await fetch(`/api/PPMs/pareto?module=${selectedModule}&semana=${selectedWeek}&año=${selectedYear}&useHistorical=true`);
       if (paretoResponse.ok) {
         const paretoResult = await paretoResponse.json();
         setParetoData(paretoResult.data);
@@ -206,13 +206,13 @@ export default function Home() {
 
   const handleVerSemanaActual = async () => {
     try {
-      const semanaResponse = await fetch('/api/semanaActual');
+      const semanaResponse = await fetch('/api/PPMs/semanaActual');
       if (semanaResponse.ok) {
         const semanaData = await semanaResponse.json();
         const semanaActual = semanaData.semana;
         const añoActual = semanaData.año;
         
-        const paretoResponse = await fetch(`/api/pareto?module=${selectedModule}&semana=${semanaActual}&año=${añoActual}`);
+        const paretoResponse = await fetch(`/api/PPMs/pareto?module=${selectedModule}&semana=${semanaActual}&año=${añoActual}`);
         if (paretoResponse.ok) {
           const paretoResult = await paretoResponse.json();
           setParetoData(paretoResult.data);
@@ -332,7 +332,7 @@ export default function Home() {
 
       const uniqueParts = Array.from(new Set(parsedRows.map((row) => row.numeroParte)));
       if (uniqueParts.length > 0) {
-        const response = await fetch('/api/familiasLookup', {
+        const response = await fetch('/api/PPMs/familiasLookup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -378,7 +378,7 @@ export default function Home() {
     const saveData = async () => {
       try {
         setIsSavingUpload(true);
-        const response = await fetch('/api/saveReordenes', {
+        const response = await fetch('/api/PPMs/saveReordenes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
