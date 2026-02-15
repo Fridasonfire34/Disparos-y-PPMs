@@ -24,6 +24,7 @@ export default function Home() {
   const [editedJuntaData, setEditedJuntaData] = useState<DisparoData[]>([]);
   const [apiEndpoint, setApiEndpoint] = useState<string | null>(null);
   const [isDetallesActive, setIsDetallesActive] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [filters, setFilters] = useState<{ [key: string]: string }>({});
   const [enviosViperFilters, setEnviosViperFilters] = useState<{ [key: string]: string }>({});
   const [enviosBoaFilters, setEnviosBoaFilters] = useState<{ [key: string]: string }>({});
@@ -48,6 +49,7 @@ export default function Home() {
       timeZone: 'UTC',
     }).format(date);
   };
+
   
 
   const formatFechaCMXDate = (dateString: string): string => {
@@ -213,6 +215,11 @@ export default function Home() {
   };
 
   const handleDownload = async () => {
+    if (isDownloading) {
+      return;
+    }
+
+    setIsDownloading(true);
     try {
       const response = await fetch('/api/Disparo/Descarga');
 
@@ -230,6 +237,8 @@ export default function Home() {
       a.remove();
     } catch (error) {
       console.error('Failed to download file', error);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -528,7 +537,11 @@ export default function Home() {
               }}
             >Detalles Disparo</button>
             <button className={`${styles.button} ${styles.Descargar}`}
-              onClick={handleDownload}>Descargar</button>
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? 'Descargando...' : 'Descargar'}
+            </button>
             {(apiEndpoint === "/api/Disparo/MActualizado" || 
               apiEndpoint === "/api/Disparo/ViperActualizado" || 
               apiEndpoint === "/api/Disparo/BoaActualizado") && (

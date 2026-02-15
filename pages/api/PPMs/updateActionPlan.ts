@@ -28,9 +28,28 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { module, id, actions, responsible, dueDate, status } = req.body;
+  const { module, id, actions } = req.body as {
+    module?: string;
+    id?: string;
+    actions?: Array<{ action?: string; responsible?: string; dueDate?: string; status?: string }>;
+  };
 
-  if (!module || !id || !actions || !responsible || !dueDate || !status) {
+  if (!module || !id || !actions || !Array.isArray(actions) || actions.length === 0) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  const cleaned = actions.map((entry) => ({
+    action: String(entry?.action ?? '').trim(),
+    responsible: String(entry?.responsible ?? '').trim(),
+    dueDate: String(entry?.dueDate ?? '').trim(),
+    status: String(entry?.status ?? '').trim(),
+  }));
+
+  const hasInvalid = cleaned.some((entry) =>
+    !entry.action || !entry.responsible || !entry.dueDate || !entry.status
+  );
+
+  if (hasInvalid) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
@@ -44,6 +63,9 @@ export default async function handler(
   try {
     pool = await sql.connect(config);
 
+    const serialized = JSON.stringify(cleaned);
+    const first = cleaned[0];
+
     const query = `
       UPDATE [${tableName}]
       SET 
@@ -55,10 +77,10 @@ export default async function handler(
     `;
 
     await pool.request()
-      .input('actions', sql.NVarChar, actions)
-      .input('responsible', sql.NVarChar, responsible)
-      .input('dueDate', sql.NVarChar, dueDate)
-      .input('status', sql.NVarChar, status)
+      .input('actions', sql.NVarChar, serialized)
+      .input('responsible', sql.NVarChar, first.responsible)
+      .input('dueDate', sql.NVarChar, first.dueDate)
+      .input('status', sql.NVarChar, first.status)
       .input('id', sql.UniqueIdentifier, id)
       .query(query);
 

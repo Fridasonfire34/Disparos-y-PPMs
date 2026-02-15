@@ -190,28 +190,41 @@
   border: 1px solid #ef9a9a;
 }
 
-.completedRow {
-  background-color: #e8f5e9 !important;
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+  border: 1px solid transparent;
 }
 
-.completedRow:hover {
-  background-color: #c8e6c9 !important;
+.statusDefault {
+  background-color: #eeeeee;
+  color: #333;
+  border-color: #d0d0d0;
 }
 
-.canceledRow {
-  background-color: #ffebee !important;
+.statusCompleted {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border-color: #81c784;
 }
 
-.canceledRow:hover {
-  background-color: #ffcdd2 !important;
+.statusCanceled {
+  background-color: #ffebee;
+  color: #b71c1c;
+  border-color: #ef9a9a;
 }
 
-.inProgressRow {
-  background-color: #fff8e1 !important;
-}
-
-.inProgressRow:hover {
-  background-color: #ffecb3 !important;
+.statusInProgress {
+  background-color: #fff8e1;
+  color: #8d6e00;
+  border-color: #ffecb3;
 }
 
 .buttonRowCell {
@@ -258,4 +271,84 @@
   background-color: #cccccc;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.multiLine {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.multiLineItem {
+  line-height: 1.4;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.multiInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.multiInputRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.addActionButton {
+  width: fit-content;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #1b7199;
+  border-radius: 0.25rem;
+  background-color: white;
+  color: #1b7199;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addActionButton:hover {
+  background-color: #e6f4fb;
+}
+
+.removeActionButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #d32f2f;
+  background-color: #ffebee;
+  color: #d32f2f;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeActionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #1b7199;
+  color: white;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.editButton:hover {
+  background-color: #0c87c0;
 }

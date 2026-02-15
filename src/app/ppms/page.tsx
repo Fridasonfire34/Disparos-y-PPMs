@@ -51,6 +51,7 @@ interface ParetoResponse {
 
 export default function Home() {
   const excelInputRef = useRef<HTMLInputElement>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -72,6 +73,19 @@ export default function Home() {
   const [isSavingUpload, setIsSavingUpload] = useState(false);
   const [isUploadProcessing, setIsUploadProcessing] = useState(false);
 
+  const safeJsonParse = <T,>(text: string, fallback: T): T => {
+    if (!text || !text.trim()) {
+      return fallback;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (error) {
+      console.error('Error parsing JSON response:', error);
+      return fallback;
+    }
+  };
+
   const fetchSemanaActual = async () => {
     try {
       const response = await fetch('/api/PPMs/semanaActual');
@@ -79,7 +93,8 @@ export default function Home() {
         setSemanaActualLabel('Error al cargar');
         return;
       }
-      const data = (await response.json()) as { semana?: string; año?: string };
+      const text = await response.text();
+      const data = safeJsonParse<{ semana?: string }>(text, {});
       const semana = data?.semana;
       if (semana) {
         const semanaTexto = String(semana);
@@ -106,6 +121,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const input = window.prompt('Ingresa la contrasena para acceder a PPMs Internos');
+    if (input === 'PPMTMP2026') {
+      setIsAuthorized(true);
+      return;
+    }
+    window.location.href = '/';
+  }, []);
+
+  useEffect(() => {
     const fetchAños = async () => {
       if (!selectedModule) return;
       
@@ -115,7 +139,8 @@ export default function Home() {
           : `/api/PPMs/aoos?tipo=${selectedModule}`;
         const response = await fetch(url);
         if (response.ok) {
-          const data = (await response.json()) as string[];
+          const text = await response.text();
+          const data = safeJsonParse<string[]>(text, []);
           setAños(data);
         }
       } catch (error) {
@@ -143,7 +168,8 @@ export default function Home() {
           : `/api/PPMs/semanas?año=${selectedYear}&tipo=${selectedModule}`;
         const response = await fetch(url);
         if (response.ok) {
-          const data = (await response.json()) as string[];
+          const text = await response.text();
+          const data = safeJsonParse<string[]>(text, []);
           setSemanas(data);
         }
       } catch (error) {
@@ -431,6 +457,7 @@ export default function Home() {
   };
 
   return (
+    isAuthorized ? (
     <div className={styles.container}>
       <div className={styles.titleRow}>
         <h1 className={styles.title}>
@@ -684,5 +711,6 @@ export default function Home() {
       )}
 
     </div>
+    ) : null
   );
 }

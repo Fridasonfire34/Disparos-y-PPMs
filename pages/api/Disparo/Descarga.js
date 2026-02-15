@@ -3,13 +3,26 @@ import * as XLSX from 'xlsx';
 import axios from 'axios';
 
 export default async function handler(req, res) {
+    const columns = [
+        'Linea',
+        'Entrega',
+        'Secuencia',
+        'Qty',
+        'Orden Produccion',
+        'Estatus',
+        'Comentarios',
+        'Fecha CMX',
+        'WK',
+        'Numero de caja enviada',
+        'Hora de envio',
+    ];
     const endpoints = {
-        "M Actualizado": "/api/MActualizado",
-        "M Enviados": "/api/MEnviado",
-        "Viper Actualizado": "/api/ViperActualizado",
-        "Viper Enviado": "/api/ViperEnviado",
-        "Boa Actualizado": "/api/BoaActualizado",
-        "Boa Enviado": "/api/BoaEnviado",
+        "M Actualizado": "/api/Disparo/MActualizado",
+        "M Enviados": "/api/Disparo/MEnviado",
+        "Viper Actualizado": "/api/Disparo/ViperActualizado",
+        "Viper Enviado": "/api/Disparo/ViperEnviado",
+        "Boa Actualizado": "/api/Disparo/BoaActualizado",
+        "Boa Enviado": "/api/Disparo/BoaEnviado",
     };
 
     const allData = {};
@@ -35,15 +48,16 @@ export default async function handler(req, res) {
     const workbook = XLSX.utils.book_new();
 
     Object.entries(allData).forEach(([sheetName, data]) => {
-        const worksheet = XLSX.utils.json_to_sheet(data);
-
-        const colsToDelete = ['ID', 'Cambios', 'Colors'];
-        colsToDelete.forEach(col => {
-            const colLetter = getColumnLetter(worksheet, col);
-            if (colLetter) {
-                deleteColumn(worksheet, colLetter);
-            }
+        const filteredData = (Array.isArray(data) ? data : []).map((row) => {
+            return columns.reduce((acc, column) => {
+                acc[column] = row && Object.prototype.hasOwnProperty.call(row, column)
+                    ? row[column]
+                    : '';
+                return acc;
+            }, {});
         });
+
+        const worksheet = XLSX.utils.json_to_sheet(filteredData, { header: columns });
 
         const range = XLSX.utils.decode_range(worksheet['!ref']);
         for (let C = range.s.c; C <= range.e.c; ++C) {
