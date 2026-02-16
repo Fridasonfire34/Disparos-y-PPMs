@@ -32,9 +32,8 @@ export default function Home() {
   const [modifiedRowIds, setModifiedRowIds] = useState<Set<string | number>>(new Set());
   const [modifiedJuntaRowIds, setModifiedJuntaRowIds] = useState<Set<string | number>>(new Set());
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; key: string } | null>(null);
-  const [editingGposCell, setEditingGposCell] = useState<{ rowIndex: number; key: string } | null>(null);
   const [gposEditValues, setGposEditValues] = useState<{ [key: string]: string | number }>({});
-  const [modifiedGposRowIds, setModifiedGposRowIds] = useState<Set<string | number>>(new Set());
+  const [, setModifiedGposRowIds] = useState<Set<string | number>>(new Set());
   const [gposModalOpen, setGposModalOpen] = useState(false);
   const [gposModalData, setGposModalData] = useState<{ key: string; value: string | number | null; po: string | number } | null>(null);
   const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
@@ -820,8 +819,8 @@ export default function Home() {
           }
 
           return (
-          <div className={styles.tableContainer}>
-          <table className={styles.table}>
+          <div className={`${styles.tableContainer} ${apiEndpoint === "/api/Disparo/MActualizado" ? styles.mainDataTableContainer : ""}`}>
+          <table className={`${styles.table} ${apiEndpoint === "/api/Disparo/MActualizado" ? styles.mainDataTable : ""}`}>
             <thead>
               <tr>
                 {reorderColumns(Object.keys(disparoData[0]), hiddenMainCols).map((key) => {

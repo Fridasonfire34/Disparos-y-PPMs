@@ -118,6 +118,17 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
+.mainDataTableContainer {
+  width: 100%;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.mainDataTable {
+  min-width: 1200px;
+}
+
 .gposTableContainer {
   width: 100%;
   max-width: calc(100vw - 24px);
@@ -228,6 +239,10 @@
 
 /* Responsive design para pantallas medianas */
 @media (max-width: 1024px) {
+  .mainDataTable {
+    min-width: 1100px;
+  }
+
   .gposTable {
     min-width: 2000px;
     font-size: 11px;
@@ -290,6 +305,15 @@
 
 /* Responsive design para pantallas pequeñas (tablets y móviles) */
 @media (max-width: 768px) {
+  .mainDataTable {
+    min-width: 900px;
+  }
+
+  .mainDataTableContainer {
+    max-width: calc(100vw - 12px);
+    padding: 8px;
+  }
+
   .gposTable {
     min-width: 1600px;
     font-size: 10px;
@@ -367,6 +391,15 @@
 
 /* Responsive design para celulares pequeños */
 @media (max-width: 480px) {
+  .mainDataTable {
+    min-width: 760px;
+  }
+
+  .mainDataTableContainer {
+    max-width: calc(100vw - 8px);
+    padding: 6px;
+  }
+
   .gposTable {
     min-width: 1300px;
     font-size: 9px;
@@ -466,9 +499,12 @@
 
 .detallesButtonContainer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 12px;
   margin-top: 5px;
+  width: 100%;
+  padding: 0 10px;
 }
 
 .detallesButtonContainer button {
@@ -481,10 +517,52 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-family: 'Poppins', sans-serif;
+  white-space: nowrap;
 }
 
 .detallesButtonContainer button:hover {
   background-color: #89c783;
+}
+
+@media (max-width: 1024px) {
+  .detallesButtonContainer {
+    gap: 10px;
+  }
+
+  .detallesButtonContainer button {
+    padding: 9px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .detallesButtonContainer {
+    gap: 8px;
+    padding: 0 6px;
+  }
+
+  .detallesButtonContainer button {
+    flex: 1 1 220px;
+    max-width: 320px;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .detallesButtonContainer {
+    gap: 6px;
+    padding: 0 4px;
+  }
+
+  .detallesButtonContainer button {
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
 }
 
 .tableTitle {
