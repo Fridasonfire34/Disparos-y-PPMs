@@ -15,6 +15,7 @@ export default function Home() {
   const [showSubButtons, setShowSubButtons] = useState(false);
   const [showDetalles, setShowDetalles] = useState(false);
   const [showEnviosViper, setShowEnviosViper] = useState(false);
+  const [showEnviosGruposLogisticos, setShowEnviosGruposLogisticos] = useState(false);
   const [showEnviosBoa, setShowEnviosBoa] = useState(false);
   const [showJunta, setShowJunta] = useState(false);
   const [disparoData, setDisparoData] = useState<DisparoData[]>([]);
@@ -24,13 +25,18 @@ export default function Home() {
   const [editedJuntaData, setEditedJuntaData] = useState<DisparoData[]>([]);
   const [apiEndpoint, setApiEndpoint] = useState<string | null>(null);
   const [isDetallesActive, setIsDetallesActive] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [filters, setFilters] = useState<{ [key: string]: string }>({});
   const [enviosViperFilters, setEnviosViperFilters] = useState<{ [key: string]: string }>({});
   const [enviosBoaFilters, setEnviosBoaFilters] = useState<{ [key: string]: string }>({});
   const [juntaFilters, setJuntaFilters] = useState<{ [key: string]: string }>({});
   const [modifiedRowIds, setModifiedRowIds] = useState<Set<string | number>>(new Set());
   const [modifiedJuntaRowIds, setModifiedJuntaRowIds] = useState<Set<string | number>>(new Set());
+  const [editingCell, setEditingCell] = useState<{ rowIndex: number; key: string } | null>(null);
+  const [editingGposCell, setEditingGposCell] = useState<{ rowIndex: number; key: string } | null>(null);
+  const [gposEditValues, setGposEditValues] = useState<{ [key: string]: string | number }>({});
+  const [modifiedGposRowIds, setModifiedGposRowIds] = useState<Set<string | number>>(new Set());
+  const [gposModalOpen, setGposModalOpen] = useState(false);
+  const [gposModalData, setGposModalData] = useState<{ key: string; value: string | number | null; po: string | number } | null>(null);
   const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
   const editableMainEndpoints = ["/api/Disparo/MActualizado", "/api/Disparo/ViperActualizado", "/api/Disparo/BoaActualizado"];
 
@@ -49,7 +55,6 @@ export default function Home() {
       timeZone: 'UTC',
     }).format(date);
   };
-
   
 
   const formatFechaCMXDate = (dateString: string): string => {
@@ -60,6 +65,30 @@ export default function Home() {
       year: 'numeric',
       timeZone: 'UTC',
     }).format(date);
+  };
+
+  const getCellStyle = (cellValue: string | number | null | undefined) => {
+    let backgroundColor = 'transparent';
+    let color = 'inherit';
+    if (cellValue) {
+      const trimmed = String(cellValue).trim().toUpperCase();
+      if (trimmed === 'NA') {
+        backgroundColor = '#000000';
+        color = '#000000';
+      } else if (trimmed === 'OK') {
+        backgroundColor = '#90EE90';
+      } else if (trimmed === 'PENDIENTE') {
+        backgroundColor = '#FFB6C1';
+        color = '#FFB6C1';
+      }
+    }
+    return {
+      padding: '8px 4px',
+      fontSize: '12px',
+      height: '30px',
+      backgroundColor,
+      color
+    };
   };
 
   const fetchData = async (endpoint: string) => {
@@ -88,6 +117,7 @@ export default function Home() {
     setIsDetallesActive(false);
     setShowJunta(false);
     setShowEnviosViper(false);
+    setShowEnviosGruposLogisticos(false);
     setShowEnviosBoa(false);
 
     if (endpoint !== apiEndpoint) {
@@ -97,9 +127,9 @@ export default function Home() {
 
   const getRowStyle = (status: string, columnName: string): React.CSSProperties => {
     if (status === "LISTO PARA ENVIAR" || status === "RTS") {
-      return { backgroundColor: "yellow" };
+      return { backgroundColor: "#F5F5D1" };
     } else if (status === "ENVIADO") {
-      return { backgroundColor: "green" };
+      return { backgroundColor: "#119c3b" };
     } else if (status === "Disparo Nuevo") {
       if (columnName === "Linea") {
         return { backgroundColor: "rgb(153,204,255)" };
@@ -124,7 +154,7 @@ export default function Home() {
 
     // Si todas las columnas especificadas están vacías pero Enviado tiene valor, pintar de verde
     if (enProcesoTraspaleo && enviadoPendiente && listoFaltaCarro && listoPorSubir && disparoNuevo && enviado) {
-      return { backgroundColor: "green" };
+      return { backgroundColor: "#29b824" };
     }
 
     return {};
@@ -215,11 +245,6 @@ export default function Home() {
   };
 
   const handleDownload = async () => {
-    if (isDownloading) {
-      return;
-    }
-
-    setIsDownloading(true);
     try {
       const response = await fetch('/api/Disparo/Descarga');
 
@@ -237,8 +262,6 @@ export default function Home() {
       a.remove();
     } catch (error) {
       console.error('Failed to download file', error);
-    } finally {
-      setIsDownloading(false);
     }
   };
 
@@ -282,6 +305,7 @@ export default function Home() {
     setShowSubButtons(false);
     setApiEndpoint(null);
     setIsDetallesActive(newShowDetalles);
+    setShowEnviosGruposLogisticos(false);
     
     if (!newShowDetalles) {
       setShowJunta(false);
@@ -302,6 +326,7 @@ export default function Home() {
         setEditedJuntaData(data);
         setShowJunta(true);
         setShowEnviosViper(false);
+        setShowEnviosGruposLogisticos(false);
         setShowEnviosBoa(false);
         setShowSubButtons(false);
       } catch (error) {
@@ -316,11 +341,28 @@ export default function Home() {
         const data: DisparoData[] = await response.json();
         setEnviosViperData(data);
         setShowEnviosViper(true);
+        setShowEnviosGruposLogisticos(false);
         setShowEnviosBoa(false);
         setShowJunta(false);
         setShowSubButtons(false);
       } catch (error) {
         console.error('Failed to fetch Envios Viper', error);
+      }
+    } else if (buttonName === "Envios de Grupos Logisticos Viper") {
+      try {
+        const response = await fetch('/api/Disparo/EnviosGposLogisticos');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: DisparoData[] = await response.json();
+        setEnviosViperData(data);
+        setShowEnviosGruposLogisticos(true);
+        setShowEnviosViper(false);
+        setShowEnviosBoa(false);
+        setShowJunta(false);
+        setShowSubButtons(false);
+      } catch (error) {
+        console.error('Failed to fetch Envios de Grupos Logisticos', error);
       }
     } else if (buttonName === "Tabla de Envios BOA") {
       try {
@@ -332,6 +374,7 @@ export default function Home() {
         setEnviosBoaData(data);
         setShowEnviosBoa(true);
         setShowEnviosViper(false);
+        setShowEnviosGruposLogisticos(false);
         setShowJunta(false);
         setShowSubButtons(false);
       } catch (error) {
@@ -457,6 +500,167 @@ export default function Home() {
       alert('Error al guardar los datos');
     }
   };
+
+  const handleGposCellDoubleClick = (po: string | number, key: string, value: string | number | null) => {
+    if (["Orden", "Fecha CMX", "Qty"].includes(key)) {
+      setGposModalData({
+        key,
+        value,
+        po,
+      });
+      setGposEditValues({
+        ...gposEditValues,
+        [po + '_' + key]: value || '',
+      });
+      setGposModalOpen(true);
+    }
+  };
+
+  const handleGposCellChange = (po: string | number, key: string, value: string | number) => {
+    setGposEditValues({
+      ...gposEditValues,
+      [po + '_' + key]: value,
+    });
+  };
+
+  const handleGposCellSave = async () => {
+    if (!gposModalData) return;
+
+    const { key, po } = gposModalData;
+    const value = gposEditValues[po + '_' + key];
+
+    if (value === null || value === undefined || value === '') {
+      alert('El valor no puede estar vacío');
+      return;
+    }
+
+    // Validación de tipo
+    if (key === "Qty" || key === "Orden") {
+      if (isNaN(Number(value))) {
+        alert(`${key} debe ser un número`);
+        return;
+      }
+    }
+
+    try {
+      // Si estamos editando Orden, verificar y reacomodar duplicados
+      if (key === "Orden") {
+        const newOrdenValue = Number(value);
+        const updatedData = [...enviosViperData];
+        const currentRowIndex = updatedData.findIndex((row) => row['PO'] === po);
+        
+        if (currentRowIndex >= 0) {
+          // Encontrar todas las filas que tienen Orden >= al nuevo valor (excluyendo la fila actual)
+          const rowsToUpdate: Array<{ po: string | number; newOrden: number }> = [];
+          
+          updatedData.forEach((row, idx) => {
+            if (idx !== currentRowIndex && row['PO'] !== po) {
+              const currentOrden = Number(row['Orden']) || 0;
+              if (currentOrden >= newOrdenValue) {
+                rowsToUpdate.push({
+                  po: row['PO'] as string | number,
+                  newOrden: currentOrden + 1
+                });
+              }
+            }
+          });
+
+          // Actualizar la fila actual
+          const response = await fetch('/api/Disparo/UpdateGpos', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              po: po,
+              column: key,
+              value: newOrdenValue,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          updatedData[currentRowIndex] = {
+            ...updatedData[currentRowIndex],
+            [key]: newOrdenValue,
+          };
+
+          // Actualizar todas las filas desplazadas
+          for (const item of rowsToUpdate) {
+            const updateResponse = await fetch('/api/Disparo/UpdateGpos', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                po: item.po,
+                column: 'Orden',
+                value: item.newOrden,
+              }),
+            });
+
+            if (updateResponse.ok) {
+              const rowIdx = updatedData.findIndex((row) => row['PO'] === item.po);
+              if (rowIdx >= 0) {
+                updatedData[rowIdx] = {
+                  ...updatedData[rowIdx],
+                  Orden: item.newOrden,
+                };
+              }
+            }
+          }
+
+          setEnviosViperData(updatedData);
+          setModifiedGposRowIds((prevIds) => new Set(prevIds).add(po));
+        }
+      } else {
+        // Para otros campos (Qty, Fecha CMX), actualización normal
+        const response = await fetch('/api/Disparo/UpdateGpos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            po: po,
+            column: key,
+            value: value,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Actualizar el estado local
+        const updatedData = [...enviosViperData];
+        const rowIndex = updatedData.findIndex((row) => row['PO'] === po);
+        if (rowIndex >= 0) {
+          updatedData[rowIndex] = {
+            ...updatedData[rowIndex],
+            [key]: key === 'Qty' ? Number(value) : value,
+          };
+        }
+        setEnviosViperData(updatedData);
+        setModifiedGposRowIds((prevIds) => new Set(prevIds).add(po));
+      }
+
+      setGposModalOpen(false);
+      setGposModalData(null);
+      setGposEditValues({});
+    } catch (error) {
+      console.error('Failed to save Gpos data', error);
+      alert('Error al guardar los datos');
+    }
+  };
+
+  const handleGposCellCancel = () => {
+    setGposModalOpen(false);
+    setGposModalData(null);
+    setGposEditValues({});
+  };
+
   return (
     <div
       className={styles.page}
@@ -537,11 +741,7 @@ export default function Home() {
               }}
             >Detalles Disparo</button>
             <button className={`${styles.button} ${styles.Descargar}`}
-              onClick={handleDownload}
-              disabled={isDownloading}
-            >
-              {isDownloading ? 'Descargando...' : 'Descargar'}
-            </button>
+              onClick={handleDownload}>Descargar</button>
             {(apiEndpoint === "/api/Disparo/MActualizado" || 
               apiEndpoint === "/api/Disparo/ViperActualizado" || 
               apiEndpoint === "/api/Disparo/BoaActualizado") && (
@@ -568,14 +768,22 @@ export default function Home() {
                     backgroundColor: showEnviosViper ? "#0d6e12" : "#60be57"
                   }}
                 >
-                  Tabla de Envios Viper
+                  Envios Viper
+                </button>
+                <button 
+                  onClick={() => handleDetalleButton("Envios de Grupos Logisticos Viper")}
+                  style={{
+                    backgroundColor: showEnviosGruposLogisticos ? "#0d6e12" : "#60be57"
+                  }}
+                >
+                  Envios de Gpos Logisticos Viper
                 </button>
                 <button onClick={() => handleDetalleButton("Tabla de Envios BOA")}
                   style={{
                     backgroundColor: showEnviosBoa ? "#0d6e12" : "#60be57"
                   }}
                 >
-                  Tabla de Envios BOA
+                  Envios BOA
                 </button>
               </div>
             </>
@@ -767,44 +975,207 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {filteredEnviosViperData.map((row, index) => (
-                  <tr key={index}>
-                    {reorderColumns(Object.keys(row), hiddenEnviosViperCols).map((key) =>
-                      !hiddenEnviosViperCols.includes(key) ? (
-                        <td
-                          key={key}
-                          style={getEnviosViperRowStyle(row)}
-                        >
-                          {key === "Fecha Entrega"
-                            ? formatEntregaDate(row[key] as string)
-                            : key === "Entrega"
-                            ? formatEntregaDate(row[key] as string)
-                            : key === "Fecha CMX"
-                              ? row[key] === null
-                                ? "Revision con planeacion"
-                                : formatFechaCMXDate(row[key] as string)
-                              : row[key] === null
-                                ? ""
-                                : key === "Hora de envio"
-                                  ? formatEntregaDate(row[key] as string)
-                                  : key === "Orden Produccion" ? (
-                                    <a
-                                      href={`/sequences?id=${row.ID}`}
-                                      style={{ color: 'blue', textDecoration: 'underline' }}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      {row[key] as string}
-                                    </a>
-                                  ) : (
-                                    row[key] as string
-                                  )
-                          }
-                        </td>
-                      ) : null
-                    )}
-                  </tr>
-                ))}
+                {filteredEnviosViperData.map((row, index) => {
+                  const currentFechaEntrega = formatEntregaDate(row["Fecha Entrega"] as string);
+                  const previousFechaEntrega = index > 0 ? formatEntregaDate(filteredEnviosViperData[index - 1]["Fecha Entrega"] as string) : null;
+                  const isFechaEntregaDuplicate = currentFechaEntrega === previousFechaEntrega;
+                  
+                  return (
+                    <tr key={index}>
+                      {reorderColumns(Object.keys(row), hiddenEnviosViperCols).map((key) =>
+                        !hiddenEnviosViperCols.includes(key) ? (
+                          <td
+                            key={key}
+                            style={getEnviosViperRowStyle(row)}
+                          >
+                            {key === "Fecha Entrega"
+                              ? isFechaEntregaDuplicate ? "" : currentFechaEntrega
+                              : key === "Entrega"
+                              ? formatEntregaDate(row[key] as string)
+                              : key === "Fecha CMX"
+                                ? row[key] === null
+                                  ? "Revision con planeacion"
+                                  : formatFechaCMXDate(row[key] as string)
+                                : row[key] === null
+                                  ? ""
+                                  : key === "Hora de envio"
+                                    ? formatEntregaDate(row[key] as string)
+                                    : key === "Orden Produccion" ? (
+                                      <a
+                                        href={`/sequences?id=${row.ID}`}
+                                        style={{ color: 'blue', textDecoration: 'underline' }}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        {row[key] as string}
+                                      </a>
+                                    ) : (
+                                      row[key] as string
+                                    )
+                            }
+                          </td>
+                        ) : null
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            </div>
+          </>
+          );
+        })()}
+
+        {showEnviosGruposLogisticos && enviosViperData.length > 0 && (() => {
+          return (
+          <>
+            <h2 className={styles.tableTitle}>Envios de Grupos Logisticos Viper</h2>
+            <div className={`${styles.tableContainer} ${styles.gposTableContainer}`}>
+            <table className={`${styles.table} ${styles.gposTable}`}>
+              <thead>
+                {/* Fila 1 de headers */}
+                <tr style={{ height: '30px' }}>
+                  <th rowSpan={3} style={{ padding: '4px 2px', width: '80px' }}>Orden</th>
+                  <th rowSpan={3} style={{ padding: '4px 2px', width: '100px' }}>Fecha CMX</th>
+                  <th rowSpan={3} style={{ padding: '4px 2px', width: '100px' }}>PO</th>
+                  <th rowSpan={3} style={{ padding: '4px 2px', width: '40px' }}>Qty</th>
+                  <th colSpan={2} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#ADD8E6', padding: '4px 2px' }}>Coil</th>
+                  <th colSpan={4} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#D3D3D3', padding: '4px 2px' }}>PRESS SHOP</th>
+                  <th colSpan={5} style={{ textAlign: 'center', backgroundColor: '#FFB6C1', padding: '6px 2px', height: '30px', verticalAlign: 'middle' }}>SUB-ASSY</th>
+                  <th colSpan={2} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#FFFF99', padding: '4px 2px' }}>LRTN WS00</th>
+                  <th colSpan={6} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#87CEEB', padding: '4px 2px' }}>LRTN WS01</th>
+                  <th colSpan={6} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#FFE4B5', padding: '4px 2px' }}>LRTN WS03</th>
+                  <th rowSpan={2} style={{ padding: '4px 2px', width: '70px', backgroundColor: '#7ddb99', textAlign: 'center' }}>LRTN WS04</th>
+                  <th colSpan={4} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#fd88ea', padding: '4px 2px' }}>MULTILINEA</th>
+                </tr>
+                {/* Fila 2 de SUB-ASSY */}
+                <tr style={{ height: '30px' }}>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS02</th>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS03</th>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS06</th>
+                  <th colSpan={2} style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS07</th>
+                </tr>
+                {/* Fila 3 de headers */}
+                <tr style={{ height: '30px' }}>
+                  {/* Coil */}
+                  <th style={{ backgroundColor: '#ADD8E6', padding: '4px 2px', width: '90px' }}>JBCB1</th>
+                  <th style={{ backgroundColor: '#ADD8E6', padding: '4px 2px', width: '90px' }}>JBRC8</th>
+                  {/* PRESS SHOP */}
+                  <th style={{ backgroundColor: '#D3D3D3', padding: '4px 2px', width: '90px' }}>JPAC6</th>
+                  <th style={{ backgroundColor: '#D3D3D3', padding: '4px 2px', width: '90px' }}>JPAG8</th>
+                  <th style={{ backgroundColor: '#D3D3D3', padding: '4px 2px', width: '90px' }}>JPAM5</th>
+                  <th style={{ backgroundColor: '#D3D3D3', padding: '4px 2px', width: '90px' }}>JPIM2</th>
+                  {/* SUB-ASSY fila 3 */}
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '4px 2px', width: '90px' }}>JCHC1</th>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '4px 2px', width: '90px' }}>JBRC2</th>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '4px 2px', width: '90px' }}>JPEG2</th>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '4px 2px', width: '90px' }}>JCRC1</th>
+                  <th style={{ backgroundColor: '#FFB6C1', padding: '4px 2px', width: '90px' }}>JPAG7</th>
+                  {/* LRTN WS00 */}
+                  <th style={{ backgroundColor: '#FFFF99', padding: '4px 2px', width: '90px' }}>JCRG5</th>
+                  <th style={{ backgroundColor: '#FFFF99', padding: '4px 2px', width: '90px' }}>JCRM3</th>
+                  {/* LRTN WS01 */}
+                  <th style={{ backgroundColor: '#87CEEB', padding: '4px 2px', width: '90px' }}>JBRM6</th>
+                  <th style={{ backgroundColor: '#87CEEB', padding: '4px 2px', width: '90px' }}>JBRM7</th>
+                  <th style={{ backgroundColor: '#87CEEB', padding: '4px 2px', width: '90px' }}>JCRC3</th>
+                  <th style={{ backgroundColor: '#87CEEB', padding: '4px 2px', width: '90px' }}>JSEM2</th>
+                  <th style={{ backgroundColor: '#87CEEB', padding: '4px 2px', width: '90px' }}>JSUM1</th>
+                  <th style={{ backgroundColor: '#87CEEB', padding: '4px 2px', width: '90px' }}>JSUM2</th>
+                  {/* LRTN WS03 */}
+                  <th style={{ backgroundColor: '#FFE4B5', padding: '4px 2px', width: '90px' }}>JBRG1</th>
+                  <th style={{ backgroundColor: '#FFE4B5', padding: '4px 2px', width: '90px' }}>JBTC1</th>
+                  <th style={{ backgroundColor: '#FFE4B5', padding: '4px 2px', width: '90px' }}>JDPC1</th>
+                  <th style={{ backgroundColor: '#FFE4B5', padding: '4px 2px', width: '90px' }}>JPAM6</th>
+                  <th style={{ backgroundColor: '#FFE4B5', padding: '4px 2px', width: '90px' }}>JSMM8</th>
+                  <th style={{ backgroundColor: '#FFE4B5', padding: '4px 2px', width: '90px' }}>JTFM1</th>
+                  {/* LRTN WS04 */}
+                  <th style={{ backgroundColor: '#7ddb99', padding: '4px 2px', width: '90px' }}>JRTM2</th>
+                  {/* MULTILINEA */}
+                  <th style={{ backgroundColor: '#fd88ea', padding: '4px 2px', width: '90px' }}>JBRM2</th>
+                  <th style={{ backgroundColor: '#fd88ea', padding: '4px 2px', width: '90px' }}>JBRM4</th>
+                  <th style={{ backgroundColor: '#fd88ea', padding: '4px 2px', width: '90px' }}>JBRM8</th>
+                  <th style={{ backgroundColor: '#fd88ea', padding: '4px 2px', width: '90px' }}>JBRM9</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const sortedGposData = [...enviosViperData].sort((a, b) => {
+                    const ordenA = Number(a['Orden']) || 999999;
+                    const ordenB = Number(b['Orden']) || 999999;
+                    return ordenA - ordenB;
+                  });
+                  return sortedGposData.map((row, index) => (
+                    <tr key={index} style={{ height: '30px' }}>
+                      {/* Orden - editable */}
+                      <td 
+                        style={getCellStyle(row["Orden"])}
+                        onDoubleClick={() => handleGposCellDoubleClick(row["PO"] as string | number, "Orden", row["Orden"])}
+                        title="Doble clic para editar"
+                      >
+                        {row["Orden"] || ""}
+                      </td>
+
+                      {/* Fecha CMX - editable */}
+                      <td 
+                        style={getCellStyle(row["Fecha CMX"])}
+                        onDoubleClick={() => handleGposCellDoubleClick(row["PO"] as string | number, "Fecha CMX", row["Fecha CMX"])}
+                        title="Doble clic para editar"
+                      >
+                        {row["Fecha CMX"] ? formatFechaCMXDate(row["Fecha CMX"] as string) : ""}
+                      </td>
+
+                      {/* PO - read only */}
+                      <td style={getCellStyle(row["PO"])}>{row["PO"] || ""}</td>
+
+                      {/* Qty - editable */}
+                      <td 
+                        style={getCellStyle(row["Qty"])}
+                        onDoubleClick={() => handleGposCellDoubleClick(row["PO"] as string | number, "Qty", row["Qty"])}
+                        title="Doble clic para editar"
+                      >
+                        {row["Qty"] || ""}
+                      </td>
+                      {/* Coil columns */}
+                      <td style={getCellStyle(row["JBCB1"])}>{row["JBCB1"] || ""}</td>
+                      <td style={getCellStyle(row["JBRC8"])}>{row["JBRC8"] || ""}</td>
+                      {/* PRESS SHOP columns */}
+                      <td style={getCellStyle(row["JPAG6"])}>{row["JPAG6"] || ""}</td>
+                      <td style={getCellStyle(row["JPAG8"])}>{row["JPAG8"] || ""}</td>
+                      <td style={getCellStyle(row["JPAM5"])}>{row["JPAM5"] || ""}</td>
+                      <td style={getCellStyle(row["JPIM2"])}>{row["JPIM2"] || ""}</td>
+                      {/* SUB-ASSY columns */}
+                      <td style={getCellStyle(row["JCHC1"])}>{row["JCHC1"] || ""}</td>
+                      <td style={getCellStyle(row["JBRC2"])}>{row["JBRC2"] || ""}</td>
+                      <td style={getCellStyle(row["JPEG2"])}>{row["JPEG2"] || ""}</td>
+                      <td style={getCellStyle(row["JCRC1"])}>{row["JCRC1"] || ""}</td>
+                      <td style={getCellStyle(row["JPAG7"])}>{row["JPAG7"] || ""}</td>
+                      {/* LRTN WS00 columns */}
+                      <td style={getCellStyle(row["JCRG5"])}>{row["JCRG5"] || ""}</td>
+                      <td style={getCellStyle(row["JCRM3"])}>{row["JCRM3"] || ""}</td>
+                      {/* LRTN WS01 columns */}
+                      <td style={getCellStyle(row["JBRM6"])}>{row["JBRM6"] || ""}</td>
+                      <td style={getCellStyle(row["JBRM7"])}>{row["JBRM7"] || ""}</td>
+                      <td style={getCellStyle(row["JCRC3"])}>{row["JCRC3"] || ""}</td>
+                      <td style={getCellStyle(row["JSEM2"])}>{row["JSEM2"] || ""}</td>
+                      <td style={getCellStyle(row["JSUM1"])}>{row["JSUM1"] || ""}</td>
+                      <td style={getCellStyle(row["JSUM2"])}>{row["JSUM2"] || ""}</td>
+                      {/* LRTN WS03 columns */}
+                      <td style={getCellStyle(row["JBRG1"])}>{row["JBRG1"] || ""}</td>
+                      <td style={getCellStyle(row["JBTC1"])}>{row["JBTC1"] || ""}</td>
+                      <td style={getCellStyle(row["JDPC1"])}>{row["JDPC1"] || ""}</td>
+                      <td style={getCellStyle(row["JPAM6"])}>{row["JPAM6"] || ""}</td>
+                      <td style={getCellStyle(row["JSMM8"])}>{row["JSMM8"] || ""}</td>
+                      <td style={getCellStyle(row["JTFM1"])}>{row["JTFM1"] || ""}</td>
+                      {/* LRTN WS04 */}
+                      <td style={getCellStyle(row["JRTM2"])}>{row["JRTM2"] || ""}</td>
+                      {/* MULTILINEA columns */}
+                      <td style={getCellStyle(row["JBRM2"])}>{row["JBRM2"] || ""}</td>
+                      <td style={getCellStyle(row["JBRM4"])}>{row["JBRM4"] || ""}</td>
+                      <td style={getCellStyle(row["JBRM8"])}>{row["JBRM8"] || ""}</td>
+                      <td style={getCellStyle(row["JBRM9"])}>{row["JBRM9"] || ""}</td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
             </div>
@@ -840,44 +1211,50 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {filteredEnviosBoaData.map((row, index) => (
-                  <tr key={index}>
-                    {reorderColumns(Object.keys(row), hiddenEnviosBoaCols).map((key) =>
-                      !hiddenEnviosBoaCols.includes(key) ? (
-                        <td
-                          key={key}
-                          style={getEnviosViperRowStyle(row)}
-                        >
-                          {key === "Fecha Entrega"
-                            ? formatEntregaDate(row[key] as string)
-                            : key === "Entrega"
-                            ? formatEntregaDate(row[key] as string)
-                            : key === "Fecha CMX"
-                              ? row[key] === null
-                                ? "Revision con planeacion"
-                                : formatFechaCMXDate(row[key] as string)
-                              : row[key] === null
-                                ? ""
-                                : key === "Hora de envio"
-                                  ? formatEntregaDate(row[key] as string)
-                                  : key === "Orden Produccion" ? (
-                                    <a
-                                      href={`/sequences?id=${row.ID}`}
-                                      style={{ color: 'blue', textDecoration: 'underline' }}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      {row[key] as string}
-                                    </a>
-                                  ) : (
-                                    row[key] as string
-                                  )
-                          }
-                        </td>
-                      ) : null
-                    )}
-                  </tr>
-                ))}
+                {filteredEnviosBoaData.map((row, index) => {
+                  const currentFechaEntrega = formatEntregaDate(row["Fecha Entrega"] as string);
+                  const previousFechaEntrega = index > 0 ? formatEntregaDate(filteredEnviosBoaData[index - 1]["Fecha Entrega"] as string) : null;
+                  const isFechaEntregaDuplicate = currentFechaEntrega === previousFechaEntrega;
+                  
+                  return (
+                    <tr key={index}>
+                      {reorderColumns(Object.keys(row), hiddenEnviosBoaCols).map((key) =>
+                        !hiddenEnviosBoaCols.includes(key) ? (
+                          <td
+                            key={key}
+                            style={getEnviosViperRowStyle(row)}
+                          >
+                            {key === "Fecha Entrega"
+                              ? isFechaEntregaDuplicate ? "" : currentFechaEntrega
+                              : key === "Entrega"
+                              ? formatEntregaDate(row[key] as string)
+                              : key === "Fecha CMX"
+                                ? row[key] === null
+                                  ? "Revision con planeacion"
+                                  : formatFechaCMXDate(row[key] as string)
+                                : row[key] === null
+                                  ? ""
+                                  : key === "Hora de envio"
+                                    ? formatEntregaDate(row[key] as string)
+                                    : key === "Orden Produccion" ? (
+                                      <a
+                                        href={`/sequences?id=${row.ID}`}
+                                        style={{ color: 'blue', textDecoration: 'underline' }}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        {row[key] as string}
+                                      </a>
+                                    ) : (
+                                      row[key] as string
+                                    )
+                            }
+                          </td>
+                        ) : null
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             </div>
@@ -891,94 +1268,38 @@ export default function Home() {
             <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
-                {/* First header row with Traveler groups */}
                 <tr>
-                  {Object.keys(juntaData[0]).map((key) => {
-                    if (columnsToHide.includes(key) || key === "Entrega") return null;
-                    if (key === "Secuencia") {
-                      return (
-                        <th key={key} rowSpan={2}>
-                          {key}
-                          <input
-                            type="text"
-                            placeholder={`Filtrar ${key}`}
-                            value={juntaFilters[key] || ""}
-                            onChange={(e) => handleJuntaFilterChange(key, e.target.value)}
-                            className={styles.filterInput}
-                          />
-                        </th>
-                      );
-                    }
-                    if (key === "ETA Coil") {
-                      return (
-                        <th key="traveler-coil" colSpan={3} style={{ textAlign: 'center', backgroundColor: 'pink' }}>
-                          TRAVELER COIL
-                        </th>
-                      );
-                    }
-                    if (key === "ETA Linea") {
-                      return (
-                        <th key="traveler-linea" colSpan={3} style={{ textAlign: 'center', backgroundColor: 'yellow' }}>
-                          TRAVELER LINEA
-                        </th>
-                      );
-                    }
-                    if (key === "ETA SUBA-ESTACION 01") {
-                      return (
-                        <th key="traveler-suba" colSpan={3} style={{ textAlign: 'center', backgroundColor: 'lightblue' }}>
-                          TRAVELER SUBA-ESTACION 01
-                        </th>
-                      );
-                    }
-                    return null;
-                  })}
+                  <th rowSpan={2} style={{ width: '120px', minWidth: '120px' }}>Entrega</th>
+                  <th rowSpan={2}>
+                    Secuencia
+                    <input
+                      type="text"
+                      placeholder="Filtrar Secuencia"
+                      value={juntaFilters["Secuencia"] || ""}
+                      onChange={(e) => handleJuntaFilterChange("Secuencia", e.target.value)}
+                      className={styles.filterInput}
+                    />
+                  </th>
+                  <th colSpan={3} style={{ textAlign: 'center', backgroundColor: '#FFB6C1' }}>
+                    TRAVELER COIL
+                  </th>
+                  <th colSpan={3} style={{ textAlign: 'center', backgroundColor: '#FFFF99' }}>
+                    TRAVELER LINEA
+                  </th>
+                  <th colSpan={3} style={{ textAlign: 'center', backgroundColor: '#ADD8E6' }}>
+                    TRAVELER SUBA-ESTACION 01
+                  </th>
                 </tr>
-                {/* Second header row with individual columns */}
                 <tr>
-                  {Object.keys(juntaData[0]).map((key) => {
-                    if (!columnsToHide.includes(key) && key !== "Secuencia" && key !== "Entrega") {
-                      let displayName = key;
-                      if (key === "ETA Coil") {
-                        displayName = "ETA";
-                      } else if (key === "Status Coil") {
-                        displayName = "Status";
-                      } else if (key === "Fecha Embarque Coil") {
-                        displayName = "Fecha Embarque";
-                      } else if (key === "ETA Linea") {
-                        displayName = "ETA";
-                      } else if (key === "Status Linea") {
-                        displayName = "Status";
-                      } else if (key === "Fecha Embarque Linea") {
-                        displayName = "Fecha Embarque";
-                      } else if (key === "ETA SUBA-ESTACION 01") {
-                        displayName = "ETA";
-                      } else if (key === "Status SUBA-ESTACION 01") {
-                        displayName = "Status";
-                      } else if (key === "Fecha Embarque SUBA-ESTACION 01") {
-                        displayName = "Fecha Embarque";
-                      }
-
-                      const isFechaEmbarque = key === "Fecha Embarque Coil" || 
-                                               key === "Fecha Embarque Linea" || 
-                                               key === "Fecha Embarque SUBA-ESTACION 01";
-
-                      return (
-                        <th key={key}>
-                          {displayName}
-                          {!isFechaEmbarque && (
-                            <input
-                              type="text"
-                              placeholder={`Filtrar ${displayName}`}
-                              value={juntaFilters[key] || ""}
-                              onChange={(e) => handleJuntaFilterChange(key, e.target.value)}
-                              className={styles.filterInput}
-                            />
-                          )}
-                        </th>
-                      );
-                    }
-                    return null;
-                  })}
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>ETA</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>Status</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>Fecha Embarque</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>ETA</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>Status</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>Fecha Embarque</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>ETA</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>Status</th>
+                  <th style={{ backgroundColor: '#FFA500', width: '150px', minWidth: '150px' }}>Fecha Embarque</th>
                 </tr>
               </thead>
               <tbody>
@@ -991,57 +1312,91 @@ export default function Home() {
                   
                   const allFechasEnviado = isCoilEnviado && isLineaEnviado && isSubaEnviado;
                   
+                  const currentEntrega = formatEntregaDate(row["Entrega"] as string);
+                  const previousEntrega = index > 0 ? formatEntregaDate(filteredJuntaData[index - 1]["Entrega"] as string) : null;
+                  const isEntregaDuplicate = currentEntrega === previousEntrega;
+                  
                   return (
                     <tr key={index}>
+                      {/* Renderizar Entrega primero */}
+                      <td style={allFechasEnviado ? { backgroundColor: "#29b824" } : getRowStyle(row.Estatus, "Entrega")}>
+                        <span style={{ fontWeight: 600 }}>
+                          {isEntregaDuplicate ? "" : currentEntrega}
+                        </span>
+                      </td>
+                      
                       {Object.entries(row).map(([key, value], idx) => {
                         if (columnsToHide.includes(key) || key === "Entrega") return null;
                         
-                        const isNonEditable = 
-                          key === "Secuencia" || 
-                          key === "Fecha Embarque Coil" || 
-                          key === "Fecha Embarque Linea" || 
-                          key === "Fecha Embarque SUBA-ESTACION 01" ||
-                          (isCoilEnviado && (key === "ETA Coil" || key === "Status Coil")) ||
-                          (isLineaEnviado && (key === "ETA Linea" || key === "Status Linea")) ||
-                          (isSubaEnviado && (key === "ETA SUBA-ESTACION 01" || key === "Status SUBA-ESTACION 01"));
+                        // Determinar si ETA/Status es editable basado en Fecha Embarque
+                        const isETACoilEditable = key === "ETA Coil" && !isCoilEnviado;
+                        const isStatusCoilEditable = key === "Status Coil" && !isCoilEnviado;
+                        const isETALineaEditable = key === "ETA Linea" && !isLineaEnviado;
+                        const isStatusLineaEditable = key === "Status Linea" && !isLineaEnviado;
+                        const isETASubaEditable = key === "ETA SUBA-ESTACION 01" && !isSubaEnviado;
+                        const isStatusSubaEditable = key === "Status SUBA-ESTACION 01" && !isSubaEnviado;
                         
-                        const isFechaEmbarqueEnviado = 
-                          (key === "Fecha Embarque Coil" || 
-                           key === "Fecha Embarque Linea" || 
-                           key === "Fecha Embarque SUBA-ESTACION 01") && 
-                          value === "ENVIADO";
-                        
-                        const isETAorStatusWithEnviado = 
-                          (isCoilEnviado && (key === "ETA Coil" || key === "Status Coil")) ||
-                          (isLineaEnviado && (key === "ETA Linea" || key === "Status Linea")) ||
-                          (isSubaEnviado && (key === "ETA SUBA-ESTACION 01" || key === "Status SUBA-ESTACION 01"));
+                        // Solo editable si es uno de los campos que puede ser editado
+                        const isEditable = isETACoilEditable || isStatusCoilEditable || isETALineaEditable || 
+                                          isStatusLineaEditable || isETASubaEditable || isStatusSubaEditable;
                         
                         let cellStyle = getRowStyle(row.Estatus, key);
                         
                         if (allFechasEnviado) {
-                          cellStyle = { backgroundColor: "green" };
-                        } else if (isFechaEmbarqueEnviado) {
-                          cellStyle = { backgroundColor: "green" };
-                        } else if (isETAorStatusWithEnviado) {
-                          cellStyle = { backgroundColor: "green" };
+                          cellStyle = { backgroundColor: "#29b824" };
+                        } else if ((key === "Fecha Embarque Coil" || key === "Fecha Embarque Linea" || key === "Fecha Embarque SUBA-ESTACION 01") && value === "ENVIADO") {
+                          cellStyle = { backgroundColor: "#29b824" };
+                        } else if ((isCoilEnviado && (key === "ETA Coil" || key === "Status Coil")) ||
+                                   (isLineaEnviado && (key === "ETA Linea" || key === "Status Linea")) ||
+                                   (isSubaEnviado && (key === "ETA SUBA-ESTACION 01" || key === "Status SUBA-ESTACION 01"))) {
+                          cellStyle = { backgroundColor: "#29b824" };
                         }
+                        
+                        const isEditingThisCell = editingCell?.rowIndex === originalIndex && editingCell?.key === key;
                         
                         return (
                           <td
                             key={idx}
                             style={cellStyle}
                           >
-                            {isNonEditable ? (
-                              <span style={key === "Secuencia" ? { fontSize: '18px', fontWeight: 'bold' } : {}}>
+                            {isEditable ? (
+                              isEditingThisCell ? (
+                                <textarea
+                                  autoFocus
+                                  value={editedJuntaData[originalIndex]?.[key] || ""}
+                                  onChange={(e) => handleJuntaCellChange(originalIndex, key, e.target.value)}
+                                  onBlur={() => setEditingCell(null)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Escape') {
+                                      setEditingCell(null);
+                                    }
+                                  }}
+                                  style={{ width: '100%', minHeight: '80px', padding: '8px', boxSizing: 'border-box', fontSize: '14px', fontFamily: 'Poppins, sans-serif', resize: 'vertical' }}
+                                />
+                              ) : (
+                                <span 
+                                  onDoubleClick={() => setEditingCell({ rowIndex: originalIndex, key })}
+                                  style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    minHeight: '40px',
+                                    padding: '8px',
+                                    cursor: 'pointer',
+                                    userSelect: 'none'
+                                  }}
+                                >
+                                  {editedJuntaData[originalIndex]?.[key] || ""}
+                                </span>
+                              )
+                            ) : (
+                              <span style={{
+                                display: 'block',
+                                width: '100%',
+                                padding: '8px',
+                                ...(key === "Secuencia" ? { fontSize: '18px', fontWeight: 'bold' } : {})
+                              }}>
                                 {value}
                               </span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={editedJuntaData[originalIndex]?.[key] || ""}
-                                onChange={(e) => handleJuntaCellChange(originalIndex, key, e.target.value)}
-                                style={{ width: '100%', padding: '4px' }}
-                              />
                             )}
                           </td>
                         );
@@ -1070,6 +1425,138 @@ export default function Home() {
               </button>
             </div>
           </>
+        )}
+
+        {/* Modal de edición para Gpos */}
+        {gposModalOpen && gposModalData && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}>
+            <div style={{
+              backgroundColor: '#fff',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              minWidth: '400px',
+              maxWidth: '500px',
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', fontWeight: 'bold' }}>
+                Editar {gposModalData.key}
+              </h3>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+                  {gposModalData.key === 'Fecha CMX' ? 'Fecha' : gposModalData.key}:
+                </label>
+
+                {gposModalData.key === 'Fecha CMX' ? (
+                  <input
+                    type="date"
+                    value={gposEditValues[gposModalData.po + '_' + gposModalData.key] 
+                      ? new Date(gposEditValues[gposModalData.po + '_' + gposModalData.key] as string).toISOString().split('T')[0]
+                      : (gposModalData.value ? new Date(gposModalData.value as string).toISOString().split('T')[0] : "")
+                    }
+                    onChange={(e) => handleGposCellChange(gposModalData.po, gposModalData.key, e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                    }}
+                    autoFocus
+                  />
+                ) : gposModalData.key === 'Qty' ? (
+                  <input
+                    type="number"
+                    value={gposEditValues[gposModalData.po + '_' + gposModalData.key] ?? gposModalData.value ?? ""}
+                    onChange={(e) => handleGposCellChange(gposModalData.po, gposModalData.key, e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                    }}
+                    autoFocus
+                  />
+                ) : gposModalData.key === 'Orden' ? (
+                  <input
+                    type="number"
+                    value={gposEditValues[gposModalData.po + '_' + gposModalData.key] ?? gposModalData.value ?? ""}
+                    onChange={(e) => handleGposCellChange(gposModalData.po, gposModalData.key, e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={gposEditValues[gposModalData.po + '_' + gposModalData.key] ?? gposModalData.value ?? ""}
+                    onChange={(e) => handleGposCellChange(gposModalData.po, gposModalData.key, e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                    }}
+                    autoFocus
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleGposCellCancel}
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '14px',
+                    backgroundColor: '#ccc',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontFamily: 'Poppins, sans-serif',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleGposCellSave}
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '14px',
+                    backgroundColor: '#0070f3',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontFamily: 'Poppins, sans-serif',
+                  }}
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>

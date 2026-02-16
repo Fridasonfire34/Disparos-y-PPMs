@@ -83,25 +83,3 @@ export default async function handler(req, res) {
     res.send(buffer);
 }
 
-function getColumnLetter(worksheet, colName) {
-    const headers = Object.keys(worksheet)
-        .filter(key => key.startsWith('!') === false)
-        .reduce((acc, key) => {
-            const col = key.replace(/\d+/, '');
-            if (!acc[col]) acc[col] = worksheet[key].v;
-            return acc;
-        }, {});
-    return Object.keys(headers).find(col => headers[col] === colName) || null;
-}
-
-function deleteColumn(worksheet, colLetter) {
-    const range = XLSX.utils.decode_range(worksheet['!ref']);
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-        const cellAddress = colLetter + (R + 1);
-        delete worksheet[cellAddress];
-    }
-    if (range.e.c > range.s.c) {
-        range.e.c--;
-        worksheet['!ref'] = XLSX.utils.encode_range(range);
-    }
-}
