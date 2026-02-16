@@ -1264,8 +1264,8 @@ export default function Home() {
         {showJunta && juntaData.length > 0 && (
           <>
             <h2 className={styles.tableTitle}>Junta 7 AM</h2>
-            <div className={styles.tableContainer}>
-            <table className={styles.table}>
+            <div className={`${styles.tableContainer} ${styles.juntaTableContainer}`}>
+            <table className={`${styles.table} ${styles.juntaTable}`}>
               <thead>
                 <tr>
                   <th rowSpan={2} style={{ width: '120px', minWidth: '120px' }}>Entrega</th>
