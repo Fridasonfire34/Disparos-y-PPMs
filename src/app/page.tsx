@@ -38,6 +38,14 @@ export default function Home() {
   const [gposModalData, setGposModalData] = useState<{ key: string; value: string | number | null; po: string | number } | null>(null);
   const columnsToHide = ["ID", "Cambios", "Colors", "Tipo", "ID_CONS", "Tipo Viper", "Prioridad"];
   const editableMainEndpoints = ["/api/Disparo/MActualizado", "/api/Disparo/ViperActualizado", "/api/Disparo/BoaActualizado"];
+  const responsiveMainEndpoints = [
+    "/api/Disparo/MActualizado",
+    "/api/Disparo/MEnviado",
+    "/api/Disparo/ViperActualizado",
+    "/api/Disparo/ViperEnviado",
+    "/api/Disparo/BoaActualizado",
+    "/api/Disparo/BoaEnviado",
+  ];
 
   const formatEntregaDate = (dateString: string): string => {
     if (!dateString) return 'Fecha no válida';
@@ -819,8 +827,8 @@ export default function Home() {
           }
 
           return (
-          <div className={`${styles.tableContainer} ${apiEndpoint === "/api/Disparo/MActualizado" ? styles.mainDataTableContainer : ""}`}>
-          <table className={`${styles.table} ${apiEndpoint === "/api/Disparo/MActualizado" ? styles.mainDataTable : ""}`}>
+          <div className={`${styles.tableContainer} ${responsiveMainEndpoints.includes(apiEndpoint ?? "") ? styles.mainDataTableContainer : ""}`}>
+          <table className={`${styles.table} ${responsiveMainEndpoints.includes(apiEndpoint ?? "") ? styles.mainDataTable : ""}`}>
             <thead>
               <tr>
                 {reorderColumns(Object.keys(disparoData[0]), hiddenMainCols).map((key) => {
@@ -1033,7 +1041,10 @@ export default function Home() {
             <table className={`${styles.table} ${styles.gposTable}`}>
               <thead>
                 {/* Fila 1 de headers */}
-                <tr style={{ height: '30px' }}>
+                <tr
+                  className={styles.gposHeaderRow1}
+                  style={{ height: '30px' }}
+                >
                   <th rowSpan={3} style={{ padding: '4px 2px', width: '80px' }}>Orden</th>
                   <th rowSpan={3} style={{ padding: '4px 2px', width: '100px' }}>Fecha CMX</th>
                   <th rowSpan={3} style={{ padding: '4px 2px', width: '100px' }}>PO</th>
@@ -1048,14 +1059,20 @@ export default function Home() {
                   <th colSpan={4} rowSpan={2} style={{ textAlign: 'center', backgroundColor: '#fd88ea', padding: '4px 2px' }}>MULTILINEA</th>
                 </tr>
                 {/* Fila 2 de SUB-ASSY */}
-                <tr style={{ height: '30px' }}>
+                <tr
+                  className={styles.gposHeaderRow2}
+                  style={{ height: '30px' }}
+                >
                   <th style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS02</th>
                   <th style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS03</th>
                   <th style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS06</th>
                   <th colSpan={2} style={{ backgroundColor: '#FFB6C1', padding: '6px 2px', textAlign: 'center', verticalAlign: 'middle', fontSize: '12px' }}>WS07</th>
                 </tr>
                 {/* Fila 3 de headers */}
-                <tr style={{ height: '30px' }}>
+                <tr
+                  className={styles.gposHeaderRow3}
+                  style={{ height: '30px' }}
+                >
                   {/* Coil */}
                   <th style={{ backgroundColor: '#ADD8E6', padding: '4px 2px', width: '90px' }}>JBCB1</th>
                   <th style={{ backgroundColor: '#ADD8E6', padding: '4px 2px', width: '90px' }}>JBRC8</th>
@@ -1327,7 +1344,6 @@ export default function Home() {
                       {Object.entries(row).map(([key, value], idx) => {
                         if (columnsToHide.includes(key) || key === "Entrega") return null;
                         
-                        // Determinar si ETA/Status es editable basado en Fecha Embarque
                         const isETACoilEditable = key === "ETA Coil" && !isCoilEnviado;
                         const isStatusCoilEditable = key === "Status Coil" && !isCoilEnviado;
                         const isETALineaEditable = key === "ETA Linea" && !isLineaEnviado;
@@ -1335,7 +1351,6 @@ export default function Home() {
                         const isETASubaEditable = key === "ETA SUBA-ESTACION 01" && !isSubaEnviado;
                         const isStatusSubaEditable = key === "Status SUBA-ESTACION 01" && !isSubaEnviado;
                         
-                        // Solo editable si es uno de los campos que puede ser editado
                         const isEditable = isETACoilEditable || isStatusCoilEditable || isETALineaEditable || 
                                           isStatusLineaEditable || isETASubaEditable || isStatusSubaEditable;
                         

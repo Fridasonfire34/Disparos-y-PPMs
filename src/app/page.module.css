@@ -140,9 +140,34 @@
 
 .gposTable {
   table-layout: fixed;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 2400px;
   font-size: 12px;
+}
+
+.table.gposTable thead .gposHeaderRow1 th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 140 !important;
+}
+
+.table.gposTable thead .gposHeaderRow2 th {
+  position: sticky !important;
+  top: 30px !important;
+  z-index: 139 !important;
+}
+
+.table.gposTable thead .gposHeaderRow3 th {
+  position: sticky !important;
+  top: 60px !important;
+  z-index: 138 !important;
+}
+
+.table.gposTable thead .gposHeaderRow1 th[rowspan="2"],
+.table.gposTable thead .gposHeaderRow1 th[rowspan="3"] {
+  top: 0 !important;
+  z-index: 141 !important;
 }
 
 .juntaTableContainer {
